@@ -1,0 +1,9 @@
+name: db_hub
+title: Database Hub
+description: Connect agents to Postgres, Neo4j, HydraDB, Qdrant, Snowflake, LanceDB, Convex, and more.
+version: 1.0.0
+settings_sections:
+  - external
+per_project_config: true
+per_agent_config: true
+always_enabled: false

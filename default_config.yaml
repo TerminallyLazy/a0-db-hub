@@ -1,0 +1,8 @@
+connections: []
+max_rows: 200
+query_timeout_s: 30
+readonly_default: true
+memory_backend:
+  enabled: false
+  connections: []
+  prefix: mem

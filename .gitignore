@@ -1,0 +1,17 @@
+deps/
+__pycache__/
+*.pyc
+.DS_Store
+config.json
+.toggle-*
+.manifest.json
+.deps-*/
+.deps.lock
+.env
+*.env
+/secrets*
+secrets.json
+secrets.env
+*.db
+*.sqlite*
+dist/

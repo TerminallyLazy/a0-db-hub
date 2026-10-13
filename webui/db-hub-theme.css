@@ -1,0 +1,414 @@
+/* Shared controls for Database Hub settings and workspace. */
+.dbhub-ui {
+  --dbhub-action: color-mix(in srgb, var(--color-highlight) 78%, #111);
+  --dbhub-muted: var(--color-text-secondary, var(--color-text-muted));
+  --dbhub-surface: var(--color-panel);
+  --dbhub-danger: color-mix(in srgb, var(--color-error-text) 75%, var(--color-text));
+  color: var(--color-text);
+  font-size: .9375rem;
+  line-height: 1.5;
+  min-width: 0;
+  accent-color: var(--color-highlight);
+  scrollbar-color: var(--color-border) transparent;
+}
+.dbhub-ui ::selection { background: var(--dbhub-action); color: #fff; }
+.dbhub-ui a { text-underline-offset: .2em; }
+.dbhub-ui .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+  min-height: 40px; padding: .55rem .85rem; border: 1px solid var(--color-border);
+  border-radius: 7px; background: var(--color-panel); color: var(--color-text);
+  font: inherit; font-size: .875rem; font-weight: 600; line-height: 1.25;
+  white-space: normal; text-decoration: none; width: fit-content; box-shadow: none;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+.dbhub-ui .btn:hover:not(:disabled) { background: var(--color-background-hover); border-color: var(--dbhub-muted); }
+.dbhub-ui .btn:active:not(:disabled) { background: var(--color-input); }
+.dbhub-ui .btn.dbhub-primary { background: var(--dbhub-action); border-color: var(--dbhub-action); color: #fff; }
+.dbhub-ui .btn.dbhub-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--dbhub-action) 85%, #000); border-color: var(--color-highlight); }
+.dbhub-ui .btn.dbhub-danger { color: var(--dbhub-danger); background: transparent; border-color: color-mix(in srgb, var(--dbhub-danger) 60%, var(--color-border)); }
+.dbhub-ui .btn.dbhub-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--dbhub-danger) 12%, var(--color-panel)); }
+.dbhub-ui .btn:disabled { background: var(--color-panel); color: var(--dbhub-muted); border-color: var(--color-border); opacity: .62; cursor: not-allowed; }
+.dbhub-ui .btn x-icon { font-size: 1.15rem; flex: 0 0 auto; }
+.dbhub-ui :is(button, a, input, select, textarea, summary):focus-visible { outline: 2px solid var(--color-highlight); outline-offset: 3px; }
+.dbhub-ui .toggle:focus-within { outline: 2px solid var(--color-highlight); outline-offset: 4px; border-radius: 20px; }
+.dbhub-ui :is(input:not([type=checkbox]), select, textarea) {
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 40px;
+  padding: .6rem .7rem; border: 1px solid var(--color-border); border-radius: 7px;
+  background: var(--color-input); color: var(--color-text); font: inherit;
+  font-weight: 400; line-height: 1.35; caret-color: var(--color-highlight);
+}
+.dbhub-ui :is(input, textarea)::placeholder { color: var(--dbhub-muted); opacity: 1; }
+.dbhub-ui :is(input, select, textarea):disabled { color: var(--dbhub-muted); opacity: .65; cursor: not-allowed; }
+.dbhub-ui input[readonly] { background: var(--color-panel); color: var(--dbhub-muted); }
+.dbhub-ui textarea { resize: vertical; min-height: 6rem; font-family: var(--font-family-mono, monospace); font-size: .875rem; line-height: 1.55; }
+.dbhub-ui input[type=checkbox] { flex: 0 0 auto; }
+.dbhub-ui :is(.dbhub-muted, .dbhub-note, .field-description, .dbw-muted) { color: var(--dbhub-muted); line-height: 1.5; }
+.dbhub-ui :is(.dbhub-note, .field-description, .dbw-muted) { font-size: .875rem; }
+.dbhub-ui :is(p, .field-description, .dbhub-note) { max-width: 75ch; }
+.dbhub-ui .field-title { color: var(--color-text); font-weight: 600; font-size: .9375rem; }
+.dbhub-ui summary { cursor: pointer; }
+.dbhub-ui [x-cloak] { display: none !important; }
+
+/* Settings retain Agent Zero's controls, with less competing setup chrome. */
+.dbhub-settings.dbhub-ui { gap: 0; padding: .3rem .25rem 1rem; }
+.dbhub-ui .dbhub-hero { gap: .8rem; padding: .3rem 0 1.35rem; flex-wrap: wrap; }
+.dbhub-ui .dbhub-hero-logo { background: var(--color-panel); border: 1px solid var(--color-border); border-radius: 10px; width: 2.75rem; height: 2.75rem; }
+.dbhub-ui .dbhub-hero-title { font-size: 1.35rem; font-weight: 650; }
+.dbhub-ui .dbhub-hero-description { margin: .15rem 0 0; color: var(--dbhub-muted); font-size: .875rem; }
+.dbhub-ui .dbhub-workspace-link { margin-left: auto; }
+.dbhub-ui .dbhub-section { border: 0; border-top: 1px solid var(--color-border); border-radius: 0; padding: 1.5rem 0; gap: .9rem; }
+.dbhub-ui .dbhub-section-head { gap: .75rem; flex-wrap: wrap; align-items: center; }
+.dbhub-ui .dbhub-section-title { font-size: 1.05rem; font-weight: 650; }
+.dbhub-ui .dbhub-section-desc { margin-top: .2rem; font-size: .875rem; }
+.dbhub-ui .dbhub-section-heading { align-items: flex-start; gap: .65rem; }
+.dbhub-ui .dbhub-section-heading > x-icon { font-size: 1.35rem; margin-top: .1rem; color: var(--dbhub-muted); }
+.dbhub-ui .dbhub-section .field { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; padding: .6rem 0; margin: 0; }
+.dbhub-ui .field > :is(.field-title, .field-label) { padding-top: .55rem; }
+.dbhub-ui .field-control, .dbhub-ui .field-label { width: 100%; min-width: 0; }
+.dbhub-ui .dbhub-add { border: 1px solid var(--color-border); border-radius: 12px; margin: 0 0 1.5rem; }
+.dbhub-ui .dbhub-add > summary { display: flex; align-items: center; gap: .75rem; padding: 1rem; font-size: .9375rem; font-weight: 650; list-style: none; }
+.dbhub-ui .dbhub-add > summary::-webkit-details-marker { display: none; }
+.dbhub-ui .dbhub-add-chevron { margin-left: auto; font-size: 1.3rem; }
+.dbhub-ui .dbhub-add[open] .dbhub-add-chevron { transform: rotate(180deg); }
+.dbhub-ui .dbhub-add > summary small { display: block; color: var(--dbhub-muted); font-size: .85rem; font-weight: 400; margin-top: .15rem; }
+.dbhub-ui .dbhub-add > summary:hover { background: var(--color-background-hover); border-radius: 12px; }
+.dbhub-ui .dbhub-add-body { padding: 0 1rem; }
+.dbhub-ui .dbhub-add-body > .dbhub-section:first-child { border-top: 1px solid var(--color-border); }
+.dbhub-ui .dbhub-add .dbhub-section { padding: 1.3rem 0; }
+.dbhub-ui .dbhub-advanced { margin-top: .25rem; }
+.dbhub-ui .dbhub-advanced > summary { padding: .65rem 0; font-weight: 600; font-size: .9rem; }
+.dbhub-ui .dbhub-advanced[open] > summary { margin-bottom: .5rem; }
+.dbhub-ui .dbhub-warn-row, .dbhub-ui .dbhub-conn-actions { gap: .6rem; flex-wrap: wrap; }
+.dbhub-ui .dbhub-conn { border-radius: 10px; }
+.dbhub-ui .dbhub-conn > summary { min-height: 64px; padding: .9rem; }
+.dbhub-ui .dbhub-conn[open] > summary { border-bottom: 1px solid var(--color-border); }
+.dbhub-ui .dbhub-conn-body { padding: .65rem 1rem 1rem; }
+.dbhub-ui .dbhub-conn-actions { margin-top: .8rem; justify-content: space-between; }
+.dbhub-ui .dbhub-catalog { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .5rem; }
+.dbhub-ui .dbhub-tile { box-shadow: none; border-color: transparent; border-radius: 8px; padding: .75rem; gap: .5rem; }
+.dbhub-ui .dbhub-tile:hover, .dbhub-ui .dbhub-tile.is-live:hover { background: var(--color-background-hover); box-shadow: none; border-color: var(--color-border); }
+.dbhub-ui .dbhub-tile.is-live { border-color: var(--color-border); }
+.dbhub-ui .dbhub-tile-name { font-size: .9rem; font-weight: 650; }
+.dbhub-ui .dbhub-tile-blurb { min-height: 0; -webkit-line-clamp: 2; }
+.dbhub-ui .dbhub-tile-logo { width: 2rem; height: 2rem; }
+.dbhub-ui .dbhub-tile-logo img { width: 1.6rem; height: 1.6rem; }
+.dbhub-ui .dbhub-callout { border-radius: 8px; background: var(--color-panel); padding: .8rem; }
+.dbhub-ui .dbhub-segmented { border-radius: 7px; }
+.dbhub-ui .dbhub-segmented button { min-height: 36px; border-radius: 5px; padding: .45rem .75rem; }
+.dbhub-ui .dbhub-segmented button.is-on { background: var(--color-panel); color: var(--color-text); box-shadow: inset 0 0 0 1px var(--color-border); }
+.dbhub-ui .dbhub-memconn { min-height: 44px; border-radius: 7px; background: var(--color-panel); }
+.dbhub-ui .toggle { flex: 0 0 60px; min-width: 60px; }
+.dbhub-ui .dbhub-row-line { gap: 1.5rem; }
+.dbhub-ui .dbhub-row-line .field-description { margin-top: .3rem; }
+
+/* Workspace uses the full right column for the editor and its results. */
+.dbhub-workspace { max-width: 1100px; margin: auto; padding: 1rem 1.25rem; }
+.dbhub-workspace h2 { margin: 0; font-size: 1.35rem; font-weight: 650; }
+.dbhub-workspace h3 { margin: 0 0 .75rem; font-size: 1rem; font-weight: 650; }
+.dbw-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.dbw-header p { color: var(--dbhub-muted); font-size: .9rem; margin: .35rem 0 0; }
+.dbw-header > x-icon { font-size: 1.6rem; color: var(--dbhub-muted); }
+.dbw-memory { display: flex; align-items: center; gap: .65rem; padding: .8rem 0; border-block: 1px solid var(--color-border); color: var(--dbhub-muted); font-size: .875rem; }
+.dbw-memory x-icon { font-size: 1.2rem; }
+.dbw-toolbar, .dbw-actions { display: flex; gap: .7rem; align-items: flex-end; flex-wrap: wrap; }
+.dbw-toolbar > label { flex: 1; min-width: 12rem; }
+.dbw-toolbar > .btn { margin-bottom: .6rem; }
+.dbhub-workspace label { display: flex; flex-direction: column; gap: .45rem; margin: .6rem 0; font-size: .875rem; font-weight: 600; }
+.dbw-loading { font-size: .875rem; color: var(--dbhub-muted); margin-bottom: 1.1rem; }
+.dbw-layout { display: grid; grid-template-columns: minmax(12rem, 26%) minmax(0, 1fr); gap: 1.5rem; margin: 1.3rem 0 0; align-items: start; }
+.dbw-resources { padding-right: 1rem; border-right: 1px solid var(--color-border); max-height: 36rem; overflow: auto; min-width: 0; }
+.dbw-resources .dbw-resource-filter { margin-bottom: 1rem; }
+.dbw-resource { display: block; width: 100%; min-height: 40px; margin: .15rem 0; padding: .65rem; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--color-text); text-align: left; font: inherit; font-size: .85rem; cursor: pointer; overflow-wrap: anywhere; }
+.dbw-resource:hover { background: var(--color-panel); }
+.dbw-resource.is-selected { border-color: var(--color-border); background: var(--color-panel); font-weight: 600; }
+.dbw-resource:disabled { opacity: .6; cursor: wait; }
+.dbw-editors { min-width: 0; }
+.dbhub-workspace details { margin: .6rem 0; }
+.dbhub-workspace summary { padding: .45rem 0; font-size: .875rem; font-weight: 600; }
+.dbhub-workspace pre { padding: .8rem; background: var(--color-input); border-radius: 7px; font: .8125rem/1.55 var(--font-family-mono,monospace); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 24rem; overflow: auto; }
+.dbhub-workspace .dbw-check { flex-direction: row; align-items: center; gap: .6rem; margin: 1rem 0; min-height: 24px; font-weight: 500; }
+.dbw-review { border: 1px solid var(--color-border); padding: 1rem; margin: 1rem 0; border-radius: 10px; }
+.dbw-results { border-top: 1px solid var(--color-border); padding-top: 1.3rem; margin-top: 1.3rem; }
+.dbw-table { max-height: 28rem; overflow: auto; margin: .8rem 0; border: 1px solid var(--color-border); border-radius: 7px; }
+.dbw-table table { border-collapse: collapse; width: 100%; font-size: .8125rem; font-variant-numeric: tabular-nums; }
+.dbw-table th, .dbw-table td { padding: .65rem .8rem; border-bottom: 1px solid var(--color-border); text-align: left; max-width: 28rem; overflow-wrap: anywhere; white-space: pre-wrap; vertical-align: top; }
+.dbw-table tr:last-child td { border-bottom: 0; }
+.dbw-table th { position: sticky; top: 0; background: var(--color-panel); font-weight: 600; }
+.dbw-table tbody tr:hover { background: var(--color-background-hover); }
+.dbw-empty { padding: 3.5rem 1rem; text-align: center; border-top: 1px solid var(--color-border); margin-top: 1.5rem; }
+.dbw-empty x-icon { display: block; font-size: 2rem; color: var(--dbhub-muted); margin-bottom: 1rem; }
+.dbw-empty p { color: var(--dbhub-muted); max-width: 48ch; margin: .4rem auto; font-size: .9rem; }
+@media (max-width: 700px) {
+  .dbw-layout { grid-template-columns: 1fr; gap: 1.2rem; }
+  .dbw-resources { max-height: 12rem; border-right: 0; border-bottom: 1px solid var(--color-border); padding: 0 0 .7rem; }
+  .dbhub-workspace { padding: .8rem; }
+  .dbhub-ui .dbhub-section .field { grid-template-columns: 1fr; gap: .4rem; }
+  .dbhub-ui .field > :is(.field-title, .field-label) { padding-top: 0; }
+  .dbhub-ui .dbhub-workspace-link { margin-left: 0; }
+  .dbhub-ui .dbhub-hero { gap: .75rem; }
+  .dbhub-ui .dbhub-hero-description { max-width: 24ch; }
+  .dbhub-ui .dbhub-section { padding-block: 1.2rem; }
+  .dbhub-ui :is(input:not([type=checkbox]), select, textarea) { font-size: 1rem; min-height: 44px; }
+  .dbhub-ui .btn { min-height: 44px; }
+  .dbhub-ui .dbhub-catalog { grid-template-columns: repeat(auto-fill,minmax(11rem,1fr)); }
+  .dbhub-ui .dbhub-row-line { align-items: flex-start; gap: 1rem; }
+  .dbhub-ui .dbhub-access-row { flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .dbhub-ui .dbhub-warn-row .btn { flex: 1 1 auto; }
+  .dbhub-ui .dbhub-pill { max-width: 8rem; }
+}
+@media (prefers-reduced-motion: reduce) { .dbhub-ui *, .dbhub-ui *::before, .dbhub-ui *::after { transition: none !important; } }
+
+.dbhub-ui.dbhub-workspace textarea { font-family: var(--font-family-mono, monospace); }
+
+/* Workbench: one bounded navigation rail and a focused resource surface. */
+.dbw-workbench { max-width: 1440px; padding: .75rem 1rem 1.25rem; }
+.dbw-workbench.is-expanded { position: relative; max-width: none; width: 100%; box-sizing: border-box; }
+.modal-inner:has(.dbw-workbench.is-expanded) { width: calc(100vw - 32px); max-width: none; height: calc(100dvh - 32px); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; }
+.modal-inner:has(.dbw-workbench.is-expanded) > .modal-scroll { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; }
+.dbw-workbench.is-expanded .dbw-shell { min-height: calc(100dvh - 260px); }
+.dbw-workbench.is-expanded .dbw-tree { max-height: calc(100dvh - 365px); }
+.dbw-workbench.is-expanded .dbw-canvas { height: max(480px,calc(100dvh - 440px)); }
+.dbw-workbench .dbw-header { margin-bottom: .75rem; }
+.dbw-workbench .dbw-header p { font-size: .85rem; }
+.dbw-connectionbar { display: flex; gap: .7rem; align-items: end; margin-bottom: .6rem; }
+.dbw-connectionbar > label { flex: 1 1 20rem; max-width: 32rem; margin: 0; }
+.dbw-connectionbar .dbw-scope { color: var(--dbhub-muted); font-size: .75rem; margin-left: auto; padding-block: .6rem; text-align: right; }
+.dbw-workbench .dbw-memory { font-size: .8rem; padding-block: .6rem; border-top: 0; border-bottom: 0; }
+.dbw-shell { display: grid; grid-template-columns: 224px minmax(0,1fr); min-height: 620px; border: 1px solid var(--color-border); border-radius: 10px; overflow: clip; margin-top: .65rem; }
+.dbw-navigator { background: color-mix(in srgb, var(--color-panel) 60%, var(--color-background)); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; min-width: 0; }
+.dbw-nav-heading { display: flex; align-items: center; justify-content: space-between; padding: 1rem .9rem .45rem; }
+.dbw-nav-heading h3 { margin: 0; font-size: .85rem; }
+.dbw-nav-heading > span { font-size: .72rem; color: var(--dbhub-muted); font-variant-numeric: tabular-nums; }
+.dbw-workbench .dbw-search { position: relative; margin: .35rem .7rem .75rem; display: block; }
+.dbw-search > x-icon { position: absolute; top: 50%; left: .6rem; transform: translateY(-50%); font-size: 1rem; color: var(--dbhub-muted); pointer-events: none; }
+.dbw-ui .dbw-search input, .dbw-workbench .dbw-search input { padding-left: 2rem; min-height: 34px; font-size: .8rem; background: var(--color-background); }
+.dbw-tree { overflow: auto; max-height: 630px; padding: 0 .5rem .7rem; flex: 1; }
+.dbw-workbench .dbw-tree-group { margin: .1rem 0 .45rem; }
+.dbw-workbench .dbw-tree-group > summary { display: flex; gap: .4rem; align-items: center; list-style: none; padding: .35rem .35rem; font-weight: 600; font-size: .75rem; color: var(--dbhub-muted); user-select: none; }
+.dbw-tree-group > summary::-webkit-details-marker { display: none; }
+.dbw-tree-group > summary:before { content: '›'; width: .5rem; display: inline-block; transform: rotate(0); }
+.dbw-tree-group[open] > summary:before { transform: rotate(90deg); }
+.dbw-tree-group > summary x-icon { font-size: 1rem; }
+.dbw-tree-group > summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbw-tree-group > summary small { margin-left: auto; font-weight: 400; font-size: .7rem; }
+.dbw-tree-children { border-left: 1px solid var(--color-border); margin-left: .65rem; padding-left: .35rem; }
+.dbw-tree-row { width: 100%; display: flex; gap: .5rem; align-items: center; padding: .35rem .5rem; min-height: 32px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--color-text); font: inherit; font-size: .78rem; text-align: left; cursor: pointer; margin: 1px 0; }
+.dbw-tree-row > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbw-tree-row x-icon { flex: 0 0 auto; font-size: 1rem; color: var(--dbhub-muted); }
+.dbw-tree-row:hover { background: var(--color-background-hover); }
+.dbw-tree-row.is-selected { background: color-mix(in srgb,var(--color-highlight) 15%,var(--color-panel)); border-color: color-mix(in srgb,var(--color-highlight) 36%,var(--color-border)); color: var(--color-text); }
+.dbw-tree-row.is-selected x-icon { color: var(--color-highlight); }
+.dbw-tree-row:disabled { cursor: wait; opacity: .65; }
+.dbw-nav-empty { color: var(--dbhub-muted); font-size: .8rem; padding: .4rem; }
+.dbw-nav-footer { display: flex; gap: .4rem; align-items: center; padding: .7rem .85rem; border-top: 1px solid var(--color-border); color: var(--dbhub-muted); font-size: .7rem; }
+.dbw-nav-footer x-icon { font-size: .95rem; }
+.dbw-content { min-width: 0; position: relative; background: var(--color-background); }
+.dbw-resource-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 1.1rem .8rem; }
+.dbw-breadcrumb { color: var(--dbhub-muted); font-size: .72rem; line-height: 1.4; overflow-wrap: anywhere; }
+.dbw-resource-heading h3 { display: flex; gap: .5rem; align-items: center; font-size: 1.1rem; font-weight: 600; margin: .35rem 0 0; overflow-wrap: anywhere; }
+.dbw-resource-heading h3 > x-icon { font-size: 1.2rem; color: var(--dbhub-muted); }
+.dbw-working { color: var(--dbhub-muted); font-size: .75rem; }
+.dbw-tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--color-border); padding: 0 .75rem; overflow-x: auto; }
+.dbw-tabs button { font: inherit; font-size: .8rem; display: flex; align-items: center; gap: .45rem; padding: .7rem .75rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--dbhub-muted); cursor: pointer; white-space: nowrap; }
+.dbw-tabs x-icon { font-size: 1.05rem; }
+.dbw-tabs button:hover { color: var(--color-text); background: var(--color-background-hover); }
+.dbw-tabs button.is-active { color: var(--color-text); border-bottom-color: var(--color-highlight); font-weight: 600; }
+.dbw-content > :is(section,.dbw-muted) { margin: 0; padding: 1rem; }
+.dbw-content > .dbw-muted:empty { display: none; }
+.dbw-data-toolbar, .dbw-data-actions { display: flex; gap: .4rem; align-items: center; }
+.dbw-data-toolbar { justify-content: space-between; flex-wrap: wrap; margin-bottom: .7rem; }
+.dbw-workbench .dbw-icon-button { padding-inline: .55rem; min-width: 36px; }
+.dbw-workbench .dbw-content .btn { min-height: 34px; font-size: .78rem; padding-block: .45rem; }
+.dbw-workbench :is(.dbw-filter-panel,.dbw-columns-panel) { position: relative; margin: 0; }
+.dbw-workbench :is(.dbw-filter-panel,.dbw-columns-panel) > summary { display: flex; align-items: center; gap: .4rem; border: 1px solid var(--color-border); border-radius: 6px; min-height: 34px; padding: .35rem .6rem; box-sizing: border-box; font-size: .78rem; font-weight: 500; background: var(--color-panel); }
+.dbw-filter-panel > summary x-icon, .dbw-columns-panel > summary x-icon { font-size: 1rem; }
+.dbw-filter-body { position: absolute; top: calc(100% + 6px); left: 0; width: 250px; max-width: calc(100vw - 70px); max-height: 440px; overflow: auto; z-index: 30; padding: .75rem; background: var(--color-panel); border: 1px solid var(--color-border); border-radius: 8px; box-shadow: 0 8px 25px #0004; }
+.dbw-filter-body label { margin: 0 0 .75rem; font-size: .78rem; }
+.dbw-filter-body small { font-weight: 400; font-size: .75rem; }
+.dbw-data-table { border-radius: 6px; margin: 0; max-height: 470px; }
+.dbw-data-table table { font-size: .75rem; }
+.dbw-data-table th { padding: .55rem .65rem; white-space: nowrap; z-index: 1; }
+.dbw-data-table th small { display: block; font: .66rem var(--font-family-mono,monospace); color: var(--dbhub-muted); margin-top: .2rem; font-weight: 400; }
+.dbw-data-table td { padding: .5rem .65rem; white-space: nowrap; max-width: 280px; height: 35px; box-sizing: border-box; vertical-align: middle; }
+.dbw-data-table td > span { display: block; overflow: hidden; text-overflow: ellipsis; max-width: 250px; }
+.dbw-data-table :is(td,th).dbw-row-index { width: 2rem; min-width: 2rem; text-align: right; color: var(--dbhub-muted); font-size: .7rem; background: var(--color-panel); }
+.dbw-data-table .is-null { color: var(--dbhub-muted); font: italic .73rem var(--font-family-mono,monospace); }
+.dbw-row-inspect { display: inline-flex; border: 0; background: transparent; color: var(--dbhub-muted); cursor: pointer; padding: .1rem; }
+.dbw-row-inspect:hover { color: var(--color-highlight); }
+.dbw-row-inspect x-icon { font-size: 1rem; }
+.dbw-pagination, .dbw-pagination > div { display: flex; align-items: center; gap: .5rem; }
+.dbw-pagination { justify-content: space-between; flex-wrap: wrap; padding-block: .8rem; font-size: .72rem; color: var(--dbhub-muted); }
+.dbw-capability-note { font-size: .74rem; line-height: 1.5; color: var(--dbhub-muted); margin: .5rem 0 0; }
+.dbw-data-empty { text-align: center; padding: 4rem 1rem; border: 1px solid var(--color-border); border-radius: 6px; color: var(--dbhub-muted); }
+.dbw-data-empty x-icon { font-size: 1.8rem; }
+.dbw-data-empty h4 { color: var(--color-text); margin: .5rem 0; font-size: .95rem; font-weight: 500; }
+.dbw-data-empty p { font-size: .8rem; margin: .4rem auto; max-width: 38ch; }
+.dbw-id-lookup { display: flex; gap: .5rem; align-items: end; margin: .5rem 0 .75rem; }
+.dbw-id-lookup > label { flex: 1; margin: 0; font-size: .75rem; }
+.dbw-workbench .dbw-id-lookup input { font-size: .8rem; min-height: 34px; }
+.dbw-structure x-icon { font-size: 1rem; vertical-align: middle; margin-right: .4rem; }
+.dbw-structure summary { text-transform: capitalize; }
+.dbw-inspector { position: absolute; top: 0; bottom: 0; right: 0; width: min(100%,520px); background: var(--color-panel); border-left: 1px solid var(--color-border); box-shadow: -8px 0 25px #0002; z-index: 40; overflow: auto; padding: 1rem; box-sizing: border-box; }
+.dbw-inspector > header { display: flex; align-items: start; justify-content: space-between; gap: .5rem; margin-bottom: 1rem; }
+.dbw-inspector h3 { margin: .35rem 0 0; }
+.dbw-inspector pre { max-height: none; }
+.dbw-inspector .dbw-review { border-color: color-mix(in srgb,var(--dbhub-danger) 40%,var(--color-border)); }
+.dbw-sr-only { position: absolute; width: 1px; height: 1px; clip: rect(0,0,0,0); overflow: hidden; }
+/* Actual metadata diagrams, without a runtime layout dependency. */
+.dbw-diagram-toolbar { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.dbw-diagram-toolbar .dbw-search { flex: 1 1 170px; margin: 0; }
+.dbw-workbench .dbw-diagram-toolbar select { flex: 0 1 150px; min-height: 34px; font-size: .8rem; }
+.dbw-diagram-options { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin: .55rem 0; }
+.dbw-diagram-options .dbw-check { font-size: .74rem; margin: 0; }
+.dbw-diagram-options .dbw-muted { font-size: .72rem; margin-left: auto; }
+.dbw-canvas { height: 560px; position: relative; overflow: hidden; border: 1px solid var(--color-border); border-radius: 7px; background-color: color-mix(in srgb,var(--color-background) 95%,#000); background-image: radial-gradient(var(--color-border) .8px, transparent .8px); background-size: 16px 16px; cursor: grab; touch-action: none; }
+.dbw-canvas:active { cursor: grabbing; }
+.dbw-canvas-world { position: absolute; inset: 0; transform-origin: 0 0; }
+.dbw-edges { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
+.dbw-edge { stroke: var(--dbhub-muted); stroke-width: 1.4; fill: none; pointer-events: stroke; cursor: pointer; }
+.dbw-edge:hover,.dbw-edge.is-active { stroke: var(--color-highlight); stroke-width: 3; }
+.dbw-edge.is-unenforced { stroke-dasharray: 6 4; }
+.dbw-node { position: absolute; border: 1px solid var(--color-border); border-radius: 7px; background: var(--color-panel); overflow: hidden; box-shadow: 0 3px 10px #0002; cursor: default; }
+.dbw-node.is-selected { border-color: var(--color-highlight); }
+.dbw-node header { height: 41px; box-sizing: border-box; display: flex; align-items: center; gap: .4rem; padding: 0 .65rem; border-bottom: 1px solid var(--color-border); cursor: move; }
+.dbw-node header > x-icon { font-size: 1rem; color: var(--dbhub-muted); }
+.dbw-node header > button { background: transparent; border: 0; color: var(--color-text); font: 600 .78rem var(--font-family, sans-serif); text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: .3rem 0; cursor: pointer; }
+.dbw-node-column { height: 25px; display: flex; gap: .4rem; align-items: center; padding: 0 .6rem; font: .7rem var(--font-family-mono,monospace); box-sizing: border-box; }
+.dbw-node-column > x-icon { font-size: .7rem; flex: 0 0 .75rem; color: var(--dbhub-muted); }
+.dbw-node-column > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbw-node-column small { margin-left: auto; font-size: .6rem; color: var(--dbhub-muted); max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbw-node-more { height: 26px; width: 100%; background: transparent; color: var(--dbhub-muted); border: 0; border-top: 1px solid var(--color-border); font-size: .65rem; cursor: pointer; }
+.dbw-canvas-controls { position: absolute; left: 12px; bottom: 12px; display: flex; align-items: center; gap: .4rem; padding: .3rem; background: var(--color-panel); border: 1px solid var(--color-border); border-radius: 8px; font-size: .7rem; }
+.dbw-minimap { position: absolute; bottom: 12px; right: 12px; width: 140px; height: 96px; background: var(--color-input); border: 1px solid var(--color-border); border-radius: 5px; overflow: hidden; cursor: crosshair; }
+.dbw-minimap i { position: absolute; display: block; background: var(--dbhub-muted); opacity: .7; border-radius: 1px; }
+.dbw-diagram-list { display: none; }
+.dbw-diagram-list.is-open { display: block; }
+.dbw-diagram-list > details { border-bottom: 1px solid var(--color-border); padding-block: .5rem; }
+.dbw-diagram-list li { font: .75rem/1.7 var(--font-family-mono,monospace); }
+.dbw-relationship { display: block; width: 100%; text-align: left; font: inherit; font-size: .75rem; background: transparent; color: var(--color-text); border: 0; border-bottom: 1px solid var(--color-border); padding: .65rem .3rem; cursor: pointer; }
+.dbw-relationship:hover { background: var(--color-background-hover); }
+.dbw-relationship small { display: block; color: var(--dbhub-muted); font-size: .68rem; padding-top: .2rem; }
+@media (max-width: 900px) { .dbw-shell { grid-template-columns: 190px minmax(0,1fr); } .dbw-tabs button { padding-inline: .55rem; } .dbw-connectionbar .dbw-scope { display: none; } }
+@media (max-width: 700px) {
+  .dbw-workbench { padding: .5rem; }
+  .dbw-shell { display: block; min-height: 0; }
+  .dbw-navigator { border-right: 0; border-bottom: 1px solid var(--color-border); }
+  .dbw-nav-heading { padding-top: .7rem; }
+  .dbw-tree { max-height: 175px; }
+  .dbw-tree-row { min-height: 38px; font-size: .85rem; }
+  .dbw-nav-footer { display: none; }
+  .dbw-resource-heading { padding: .8rem; }
+  .dbw-tabs { padding-inline: .4rem; gap: 0; }
+  .dbw-tabs button { min-height: 44px; padding: .55rem; font-size: .75rem; }
+  .dbw-tabs x-icon { display: none; }
+  .dbw-content > section { padding: .75rem; }
+  .dbw-workbench .dbw-content .btn { min-height: 40px; }
+  .dbw-workbench .dbw-search input { min-height: 40px; font-size: .9rem; }
+  .dbw-data-table { max-height: 400px; }
+  .dbw-row-inspect { padding: .4rem; }
+  .dbw-filter-body { width: 210px; }
+  .dbw-columns-panel .dbw-filter-body { left: auto; right: 0; }
+  .dbw-inspector { position: absolute; top: 0; bottom: auto; min-height: 100%; width: 100%; border-left: 0; }
+  .dbw-workbench .dbw-canvas { display: none !important; }
+  .dbw-diagram-list { display: block; }
+  .modal-inner:has(.dbw-workbench.is-expanded) { width: calc(100vw - 16px); height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); }
+}
+
+/* Settings starts with a choice; credentials appear only for that choice. */
+.dbhub-settings-v2 .dbhub-hero { padding-bottom: 1rem; }
+.dbhub-settings-v2 .dbhub-hero-logo { display: none; }
+.dbhub-settings-v2 .dbhub-section { gap: .8rem; padding-block: 1.4rem; }
+.dbhub-settings-v2 .dbhub-section-title { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.dbhub-settings-v2 .dbhub-section-desc { margin: .25rem 0 0; }
+.dbhub-settings-v2 > .dbhub-note { font-size: .74rem; padding-bottom: .8rem; color: var(--dbhub-muted); }
+.dbhub-settings-v2 .dbhub-catalog-section { border-top: 1px solid var(--color-border); }
+.dbhub-catalog-search { display: flex; align-items: center; position: relative; width: 210px; max-width: 100%; }
+.dbhub-catalog-search x-icon { position: absolute; left: .7rem; font-size: 1.1rem; color: var(--dbhub-muted); }
+.dbhub-settings-v2 .dbhub-catalog-search input { padding-left: 2.2rem; font-size: .8rem; min-height: 36px; }
+.dbhub-catalog-filters, .dbhub-setup-modes { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; }
+.dbhub-catalog-filters > button, .dbhub-setup-modes > button { border: 1px solid transparent; background: transparent; color: var(--dbhub-muted); font: inherit; font-size: .78rem; padding: .45rem .65rem; border-radius: 6px; cursor: pointer; }
+.dbhub-catalog-filters > button:hover, .dbhub-setup-modes > button:hover { color: var(--color-text); background: var(--color-background-hover); }
+.dbhub-catalog-filters > button.is-active, .dbhub-setup-modes > button.is-active { background: var(--color-panel); border-color: var(--color-border); color: var(--color-text); }
+.dbhub-settings-v2 .dbhub-compact-catalog { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .5rem; }
+.dbhub-provider-tile { display: flex; align-items: center; gap: .65rem; padding: .8rem .7rem; border: 1px solid var(--color-border); border-radius: 8px; min-width: 0; background: transparent; color: var(--color-text); font: inherit; text-align: left; cursor: pointer; min-height: 72px; }
+.dbhub-provider-tile:hover { background: var(--color-background-hover); border-color: var(--dbhub-muted); }
+.dbhub-provider-tile.is-selected { border-color: var(--color-highlight); background: color-mix(in srgb,var(--color-highlight) 8%,var(--color-panel)); }
+.dbhub-provider-name { display: flex; flex: 1; flex-direction: column; gap: .15rem; min-width: 0; }
+.dbhub-provider-name strong { font-size: .8rem; font-weight: 600; }
+.dbhub-provider-name small { font-size: .65rem; line-height: 1.3; color: var(--dbhub-muted); }
+.dbhub-provider-tile > x-icon { font-size: 1rem; color: var(--dbhub-muted); }
+.dbhub-settings-v2 .dbhub-provider-tile .dbhub-tile-logo { width: 1.85rem; height: 1.85rem; border-radius: 5px; background: var(--color-panel); }
+.dbhub-settings-v2 .dbhub-provider-tile .dbhub-tile-logo img { width: 1.5rem; height: 1.5rem; }
+.dbhub-show-catalog { align-self: flex-start; font: inherit; font-size: .78rem; padding: .35rem 0; border: 0; background: transparent; color: var(--dbhub-muted); cursor: pointer; text-decoration: underline; text-underline-offset: .25em; }
+.dbhub-show-catalog:hover { color: var(--color-text); }
+.dbhub-setup-pane { border: 1px solid var(--color-border); border-radius: 10px; padding: 1rem; background: var(--color-panel); margin-top: .2rem; }
+.dbhub-setup-heading { display: flex; align-items: start; justify-content: space-between; gap: .7rem; }
+.dbhub-setup-heading h4 { margin: 0; font-size: 1rem; font-weight: 600; }
+.dbhub-setup-heading p { margin: .35rem 0 .8rem; font-size: .8rem; }
+.dbhub-setup-modes { border-bottom: 1px solid var(--color-border); padding-bottom: .7rem; margin-bottom: .9rem; }
+.dbhub-setup-modes > button.is-active { background: var(--color-background); }
+.dbhub-settings-v2 .dbhub-setup-pane .field { grid-template-columns: minmax(0,1fr) minmax(0,1.4fr); }
+.dbhub-manual-setup > p { margin: .8rem 0; font-size: .85rem; }
+.dbhub-settings-v2 .dbhub-connections-section .dbhub-conn { border-radius: 8px; }
+.dbhub-settings-v2 .dbhub-connections-section .dbhub-conn > summary { min-height: 58px; padding: .75rem .85rem; }
+.dbhub-settings-v2 .dbhub-conn-title { font-size: .9rem; font-weight: 600; }
+.dbhub-settings-v2 .dbhub-conn-body { padding: .75rem 1rem 1rem; }
+.dbhub-settings-v2 .dbhub-conn-body > .field:first-child { padding-top: .2rem; }
+.dbhub-settings-v2 .dbhub-access { margin-top: .5rem; border-top: 1px solid var(--color-border); }
+.dbhub-settings-v2 .dbhub-access-label .field-title { font-size: .85rem; }
+.dbhub-settings-v2 .dbhub-access-label .field-description { font-size: .78rem; }
+.dbhub-settings-v2 .dbhub-advanced > summary { font-size: .82rem; font-weight: 500; color: var(--dbhub-muted); }
+.dbhub-settings-v2 .dbhub-advanced[open] > summary { color: var(--color-text); }
+.dbhub-memory-state { display: flex; align-items: center; color: var(--dbhub-muted); font-size: .8rem; margin: 0; }
+.dbhub-settings-v2 .dbhub-settings-advanced { border-top: 1px solid var(--color-border); margin-top: .2rem; }
+.dbhub-settings-advanced > summary { display: flex; align-items: center; gap: .55rem; padding: 1rem 0; font-size: .85rem; font-weight: 500; }
+.dbhub-settings-advanced > summary x-icon { color: var(--dbhub-muted); font-size: 1.2rem; }
+.dbhub-settings-advanced > summary span { margin-left: auto; color: var(--dbhub-muted); font-size: .75rem; font-weight: 400; }
+.dbhub-settings-v2 .dbhub-settings-advanced .dbhub-section { border: 0; padding-top: 0; }
+@media (max-width: 900px) { .dbhub-settings-v2 .dbhub-compact-catalog { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (max-width: 700px) {
+  .dbhub-settings-v2 .dbhub-compact-catalog { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .dbhub-settings-v2 .dbhub-section { padding-block: 1.15rem; }
+  .dbhub-settings-v2 .dbhub-section-head { align-items: stretch; }
+  .dbhub-catalog-search { width: 100%; }
+  .dbhub-provider-tile { gap: .45rem; padding: .7rem .5rem; min-height: 68px; }
+  .dbhub-provider-tile > x-icon { display: none; }
+  .dbhub-provider-name strong { font-size: .78rem; }
+  .dbhub-settings-v2 .dbhub-setup-pane .field { grid-template-columns: 1fr; }
+  .dbhub-catalog-filters > button, .dbhub-setup-modes > button { min-height: 40px; padding-inline: .5rem; }
+  .dbhub-settings-v2 .dbhub-access-row { flex-wrap: wrap; }
+  .dbhub-settings-v2 .dbhub-segmented { flex-wrap: wrap; }
+  .dbhub-settings-advanced > summary span { display: none; }
+  .dbhub-setup-pane { padding: .8rem; }
+}
+.dbw-vector-summary { display: flex; gap: 1.2rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.dbw-vector-summary > div { flex: 1 1 150px; border-bottom: 1px solid var(--color-border); padding-bottom: .75rem; min-width: 0; }
+.dbw-vector-summary span { display: block; color: var(--dbhub-muted); font-size: .75rem; }
+.dbw-vector-summary strong { display: block; font: 500 .85rem var(--font-family-mono,monospace); padding-top: .35rem; overflow-wrap: anywhere; }
+.dbw-vector-summary p { margin: 0; flex-basis: 100%; font-size: .8rem; }
+
+/* Database setup stays separate from the resource navigator and memory setup. */
+.dbw-setup-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin-bottom: 1rem; }
+.dbw-setup-panel { border: 1px solid var(--color-border); border-radius: 10px; padding: 1.2rem; margin-bottom: 1.25rem; }
+.dbw-setup-panel > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.dbw-setup-panel h3, .dbw-setup-panel h4 { margin: 0 0 .4rem; }
+.dbw-setup-panel p { margin: .4rem 0 1rem; }
+.dbw-setup-panel label { display: flex; flex-direction: column; gap: .4rem; font-size: .8rem; }
+.dbw-table-basics { display: grid; grid-template-columns: 1fr 1.4fr; gap: 1rem; margin: .8rem 0 1.25rem; }
+.dbw-column-heading { display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
+.dbw-column-list { margin: .65rem 0 1rem; }
+.dbw-column-editor { display: grid; grid-template-columns: minmax(130px,1fr) minmax(140px,1fr) auto auto 40px; align-items: end; gap: .8rem; padding: .85rem 0; border-bottom: 1px solid var(--color-border); }
+.dbw-setup-panel .dbw-check { flex-direction: row; align-items: center; min-height: 40px; }
+.dbw-table-review { border-top: 1px solid var(--color-border); margin-top: 1.25rem; padding-top: 1.25rem; }
+.dbw-setup-panel pre { padding: 1rem; background: var(--color-input); border-radius: 7px; white-space: pre-wrap; overflow-wrap: anywhere; font: .8rem/1.6 var(--font-family-mono,monospace); }
+.dbw-setup-panel textarea { margin-bottom: 1rem; }
+@media (max-width: 800px) {
+  .dbw-table-basics { grid-template-columns: 1fr; }
+  .dbw-column-editor { grid-template-columns: minmax(0,1fr) minmax(0,1fr) 40px; gap: .6rem; }
+  .dbw-column-editor > label:nth-child(1) { grid-column: 1 / 3; }
+  .dbw-column-editor > label:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .dbw-column-editor > label:nth-child(3) { grid-column: 1; grid-row: 3; }
+  .dbw-column-editor > label:nth-child(4) { grid-column: 2 / -1; grid-row: 3; }
+  .dbw-column-editor > button { grid-column: 3; grid-row: 1; }
+  .dbw-setup-panel { padding: 1rem; }
+}

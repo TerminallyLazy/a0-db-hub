@@ -1,0 +1,636 @@
+<html>
+<head>
+  <link rel="stylesheet" href="/plugins/db_hub/webui/db-hub-theme.css">
+  <title>Database Hub</title>
+  <script type="module" src="/plugins/db_hub/webui/db-hub-store.js"></script>
+  <script type="module" src="/plugins/db_hub/webui/provider-setup-store.js"></script>
+  <script type="module" src="/plugins/db_hub/webui/oauth-store.js"></script>
+  <script type="module" src="/plugins/db_hub/webui/workspace-store.js"></script>
+</head>
+<body>
+  <div x-data="{ destroy() { $store.dbHubProvider.reset(); $store.dbHubOAuth.reset(); } }" x-init="$store.dbHub.init(config, context); $store.dbHubOAuth.init()">
+    <template x-if="config">
+      <div class="dbhub-settings dbhub-ui dbhub-settings-v2">
+        <div class="dbhub-hero">
+          <span class="dbhub-hero-logo"><x-icon name="database"></x-icon></span>
+          <div>
+            <div class="dbhub-hero-title">Database Hub</div><p class="dbhub-hero-description">Connect a database. Choose how Agent Zero uses it.</p>
+          </div>
+          <button type="button" class="btn dbhub-workspace-link" @click="$store.dbHubWorkspace.open($store.pluginSettingsPrototype)"><x-icon name="database"></x-icon>Browse data</button>
+        </div>
+        <template x-if="$store.pluginSettingsPrototype && $store.dbHub.scopeLabel($store.pluginSettingsPrototype)">
+          <div class="dbhub-muted dbhub-note" x-text="$store.dbHub.scopeLabel($store.pluginSettingsPrototype)"></div>
+        </template>
+
+        <section class="dbhub-section dbhub-catalog-section" id="dbhub-catalog">
+          <div class="dbhub-section-head"><div><h3 class="dbhub-section-title">Add a database</h3><p class="dbhub-section-desc">Choose a provider to see its connection options.</p></div><label class="dbhub-catalog-search"><x-icon name="search"></x-icon><input type="search" aria-label="Search database catalog" placeholder="Find a database…" x-model="$store.dbHub.catalogSearch"></label></div>
+          <div class="dbhub-catalog-filters" role="group" aria-label="Database category"><template x-for="category in ['All', 'SQL', 'Vector', 'Graph', 'Document & key-value']" :key="category"><button type="button" :class="{'is-active': $store.dbHub.catalogCategory === category}" :aria-pressed="$store.dbHub.catalogCategory === category" @click="$store.dbHub.catalogCategory = category" x-text="category"></button></template></div>
+          <div class="dbhub-catalog dbhub-compact-catalog"><template x-for="p in $store.dbHub.visibleCatalog" :key="p.key"><button type="button" class="dbhub-provider-tile" :class="{'is-selected': $store.dbHub.setupKey === p.key}" :aria-pressed="$store.dbHub.setupKey === p.key" @click="$store.dbHub.chooseSetup(p.key)" :aria-label="'Connect ' + p.name"><span class="dbhub-tile-logo" :class="{bleed:p.bleed,dark:p.dark}"><template x-if="p.logo"><img :src="p.logo" alt="" loading="lazy"></template><template x-if="!p.logo"><x-icon :name="p.icon"></x-icon></template></span><span class="dbhub-provider-name"><strong x-text="p.name"></strong><small x-text="$store.dbHub.catalogType(p)"></small></span><x-icon name="chevron_right"></x-icon></button></template></div>
+          <p class="dbhub-muted" x-show="!$store.dbHub.visibleCatalog.length">No matching databases. Try another name or category.</p>
+          <button type="button" class="dbhub-show-catalog" x-show="!$store.dbHub.catalogSearch && $store.dbHub.catalogCategory === 'All'" @click="$store.dbHub.showAllCatalog = !$store.dbHub.showAllCatalog" x-text="$store.dbHub.showAllCatalog ? 'Show popular databases' : 'View all ' + $store.dbHub.catalog.length + ' databases'"></button>
+          <template x-if="$store.dbHub.setupProduct"><div class="dbhub-setup-pane">
+            <div class="dbhub-setup-heading"><div><h4 x-text="'Connect ' + $store.dbHub.setupProduct.name"></h4><p class="dbhub-muted" x-text="$store.dbHub.setupProduct.blurb"></p></div><button type="button" class="btn dbw-icon-button" aria-label="Close database setup" @click="$store.dbHub.closeSetup()"><x-icon name="close"></x-icon></button></div>
+            <div class="dbhub-setup-modes" role="group" aria-label="Connection method"><button type="button" :aria-pressed="$store.dbHub.setupMode === 'details'" :class="{'is-active': $store.dbHub.setupMode === 'details'}" @click="$store.dbHub.setupMode = 'details'">Connection details</button><button type="button" x-show="['neon','supabase'].includes($store.dbHub.setupKey)" :aria-pressed="$store.dbHub.setupMode === 'projects'" :class="{'is-active': $store.dbHub.setupMode === 'projects'}" @click="$store.dbHub.setupMode = 'projects'">Browse projects</button><button type="button" x-show="$store.dbHubOAuth.providers.some(p => p.id === $store.dbHub.setupKey)" :aria-pressed="$store.dbHub.setupMode === 'oauth'" :class="{'is-active': $store.dbHub.setupMode === 'oauth'}" @click="$store.dbHub.setupMode = 'oauth'">Registered OAuth app</button></div>
+            <div class="dbhub-manual-setup" x-show="$store.dbHub.setupMode === 'details'"><p class="dbhub-muted" x-text="['lancedb','chromadb','duckdb','generic'].includes($store.dbHub.setupKey) ? 'Use a local database path or the connection URL for your hosted database.' : 'Copy your connection URL and credentials from the provider. Add them to a named connection below, then test and save.'"></p><div class="dbw-actions"><button type="button" class="btn dbhub-primary" @click="$store.dbHub.addFromCatalog(config, $store.dbHub.setupKey, context); $store.dbHub.setupKey = ''">Enter connection details</button><a class="btn" x-show="['neon','supabase','qdrant'].includes($store.dbHub.setupKey)" :href="$store.dbHubProvider.details.console" target="_blank" rel="noopener noreferrer"><x-icon name="open_in_new"></x-icon>Open provider console</a></div></div>
+          <div class="dbhub-project-setup" x-show="$store.dbHub.setupMode === 'projects'">
+            <div class="dbhub-muted dbhub-note">Connect your account to choose a project and database. Your management token expires from this setup session after 15 minutes.</div>
+            <template x-if="!$store.dbHubProvider.handle">
+              <div>
+                <label class="field"><span class="field-title" x-text="$store.dbHubProvider.details.tokenLabel"></span>
+                  <input type="password" aria-label="Provider management token" x-model="$store.dbHubProvider.token" autocomplete="off" spellcheck="false" placeholder="Paste token or §§secret(KEY)" />
+                </label>
+                <label class="field" x-show="$store.dbHubProvider.provider === 'neon'"><span class="field-title">Organization ID (for a Neon personal key)</span><input type="text" aria-label="Neon organization ID" x-model="$store.dbHubProvider.organization" placeholder="org-… (omit for an organization key)" /></label>
+                <div class="dbhub-warn-row">
+                  <a :href="$store.dbHubProvider.details.tokenUrl" target="_blank" rel="noopener noreferrer">Get a management token</a>
+                  <button type="button" class="btn dbhub-primary" :disabled="$store.dbHubProvider.busy || !$store.dbHubProvider.token" @click="$store.dbHubProvider.connect()" x-text="$store.dbHubProvider.busy ? 'Loading…' : 'Load projects'"></button>
+                </div>
+              </div>
+            </template>
+            <template x-if="$store.dbHubProvider.handle">
+              <div>
+                <label class="field"><span class="field-title">Project</span><select aria-label="Provider project" :disabled="$store.dbHubProvider.busy" x-model="$store.dbHubProvider.project" @change="$store.dbHubProvider.selectProject()"><option value="">Choose a project</option><template x-for="item in $store.dbHubProvider.projects" :key="item.id"><option :value="item.id" x-text="item.name"></option></template></select></label>
+                <template x-if="$store.dbHubProvider.provider === 'neon'">
+                  <div>
+                    <label class="field"><span class="field-title">Branch</span><select aria-label="Neon branch" :disabled="$store.dbHubProvider.busy || !$store.dbHubProvider.branches.length" x-model="$store.dbHubProvider.branch" @change="$store.dbHubProvider.selectBranch()"><option value="">Choose a branch</option><template x-for="item in $store.dbHubProvider.branches" :key="item.id"><option :value="item.id" x-text="item.name"></option></template></select></label>
+                    <label class="field"><span class="field-title">Database</span><select aria-label="Neon database" :disabled="$store.dbHubProvider.busy" x-model="$store.dbHubProvider.database"><option value="">Choose a database</option><template x-for="item in $store.dbHubProvider.databases" :key="item.id"><option :value="item.id" x-text="item.name"></option></template></select></label>
+                    <label class="field"><span class="field-title">Role</span><select aria-label="Neon role" :disabled="$store.dbHubProvider.busy" x-model="$store.dbHubProvider.role"><option value="">Choose a role</option><template x-for="item in $store.dbHubProvider.roles" :key="item.id"><option :value="item.id" x-text="item.name"></option></template></select></label>
+                  </div>
+                </template>
+                <template x-if="$store.dbHubProvider.provider === 'supabase'">
+                  <div>
+                    <label class="field"><span class="field-title">Connection</span><select aria-label="Supabase connection" :disabled="$store.dbHubProvider.busy || !$store.dbHubProvider.endpoints.length" x-model="$store.dbHubProvider.endpoint"><option value="" x-text="$store.dbHubProvider.busy ? 'Loading connections…' : ($store.dbHubProvider.endpoints.length ? 'Choose a connection' : 'No connections available')"></option><template x-for="item in $store.dbHubProvider.endpoints" :key="item.id"><option :value="item.id" x-text="item.name"></option></template></select></label>
+                    <p class="dbhub-muted" x-show="$store.dbHubProvider.resourceNotice" x-text="$store.dbHubProvider.resourceNotice"></p><label class="field"><span class="field-title">Existing database password</span><input type="password" aria-label="Existing Supabase database password" x-model="$store.dbHubProvider.databasePassword" autocomplete="off" /></label>
+                    <div class="dbhub-muted dbhub-note">Supabase cannot return this password through its management API. This does not reset or change your password.</div>
+                  </div>
+                </template>
+                <label class="field"><span class="field-title">Connection name</span><input type="text" aria-label="Imported connection name" x-model="$store.dbHubProvider.connectionId" placeholder="my_database" spellcheck="false" /></label>
+                <div class="dbhub-warn-row">
+                  <button type="button" class="btn dbhub-primary" :disabled="$store.dbHubProvider.busy || !$store.dbHubProvider.canImport" @click="$store.dbHubProvider.importDraft(config, context).then(() => { if (!$store.dbHubProvider.handle) $store.dbHub.setupKey = ''; })">Add selected database</button>
+                  <button type="button" class="btn" :disabled="$store.dbHubProvider.busy" @click="$store.dbHubProvider.reset($store.dbHubProvider.provider)">Disconnect account</button>
+                </div>
+              </div>
+            </template>
+          </div>          <div class="dbhub-oauth-setup" x-show="$store.dbHub.setupMode === 'oauth'">
+
+            <p class="dbhub-muted" x-text="$store.dbHubOAuth.details.note"></p>
+            <a :href="$store.dbHubOAuth.details.docs" target="_blank" rel="noopener noreferrer">Provider registration instructions</a>
+            <label class="field"><span class="field-title">Register this callback URL</span><input aria-label="OAuth callback URL" readonly :value="$store.dbHubOAuth.callback" /></label>
+            <template x-if="!$store.dbHubOAuth.handle"><div>
+              <label class="field"><span class="field-title">Client ID</span><input aria-label="OAuth client ID" x-model="$store.dbHubOAuth.clientId" autocomplete="off" /></label>
+              <label class="field"><span class="field-title">Client secret<span x-show="$store.dbHubOAuth.details.custom"> (optional for public clients)</span></span><input type="password" aria-label="OAuth client secret" x-model="$store.dbHubOAuth.clientSecret" autocomplete="off" placeholder="Paste secret or §§secret(KEY)" /></label>
+              <label class="field" x-show="$store.dbHubOAuth.provider === 'snowflake'"><span class="field-title">Snowflake account URL</span><input aria-label="Snowflake account URL" x-model="$store.dbHubOAuth.accountUrl" placeholder="https://organization-account.snowflakecomputing.com" /></label>
+              <template x-if="$store.dbHubOAuth.details.custom"><div>
+                <label class="field"><span class="field-title">Authorization endpoint</span><input aria-label="OIDC authorization endpoint" x-model="$store.dbHubOAuth.authorizationEndpoint" placeholder="https://identity.example/authorize" /></label>
+                <label class="field"><span class="field-title">Token endpoint</span><input aria-label="OIDC token endpoint" x-model="$store.dbHubOAuth.tokenEndpoint" placeholder="https://identity.example/token" /></label>
+                <label class="field"><span class="field-title">Scopes</span><input aria-label="OIDC scopes" x-model="$store.dbHubOAuth.scopes" /></label>
+                <label class="field"><span class="field-title">Audience (if required)</span><input aria-label="OIDC audience" x-model="$store.dbHubOAuth.audience" /></label>
+                <label class="field"><span class="field-title">Token client authentication</span><select aria-label="OIDC client authentication" x-model="$store.dbHubOAuth.tokenAuth"><option value="post">Client credentials in request body</option><option value="basic">HTTP Basic authentication</option></select></label>
+              </div></template>
+              <button type="button" class="btn dbhub-primary" :disabled="$store.dbHubOAuth.busy || !$store.dbHubOAuth.clientId" @click="$store.dbHubOAuth.start()">Prepare sign-in</button>
+            </div></template>
+            <template x-if="$store.dbHubOAuth.handle"><div>
+              <div class="dbhub-warn-row" x-show="!$store.dbHubOAuth.complete"><a class="btn" :href="$store.dbHubOAuth.authorizationUrl" target="_blank" rel="noopener noreferrer">Open provider sign-in</a><button type="button" class="btn dbhub-primary" :disabled="$store.dbHubOAuth.busy" @click="$store.dbHubOAuth.finish()">Finish sign-in</button></div>
+              <template x-if="$store.dbHubOAuth.complete"><div>
+                <label class="field"><span class="field-title">Resource connection URL</span><input aria-label="OAuth resource URL" x-model="$store.dbHubOAuth.dsn" :placeholder="$store.dbHubOAuth.example" /></label>
+                <label class="field"><span class="field-title">Connection name</span><input aria-label="OAuth connection name" x-model="$store.dbHubOAuth.connectionId" /></label>
+                <button type="button" class="btn dbhub-primary" :disabled="$store.dbHubOAuth.busy || !$store.dbHubOAuth.dsn" @click="$store.dbHubOAuth.importDraft(config, context)">Import OAuth connection draft</button>
+              </div></template>
+              <button type="button" class="btn" :disabled="$store.dbHubOAuth.busy" @click="$store.dbHubOAuth.reset($store.dbHubOAuth.provider)">Cancel sign-in</button>
+            </div></template>
+          </div>          </div></template>
+        </section>
+        <section class="dbhub-section dbhub-connections-section" id="dbhub-connections">
+          <div class="dbhub-section-head">
+            <div class="dbhub-section-heading">
+              <x-icon name="link"></x-icon>
+              <div>
+                <h3 class="dbhub-section-title">Your connections</h3>
+                <div class="dbhub-section-desc" x-text="$store.dbHub.connectionsDesc(config)"></div>
+              </div>
+            </div>
+
+          </div>
+          <template x-if="!config.connections || config.connections.length === 0">
+            <div class="dbhub-empty">
+              <div class="dbhub-empty-title">No connections yet</div>
+              <div class="dbhub-empty-copy">Choose a database from the catalog above to add your first connection.</div>
+            </div>
+          </template>
+          <template x-for="(conn, idx) in config.connections" :key="idx">
+            <details class="dbhub-conn" :id="'dbhub-conn-' + conn.id" :open="context.openIdx === idx" @toggle="context.openIdx = $event.target.open ? idx : (context.openIdx === idx ? null : context.openIdx)">
+              <summary>
+                <span class="dbhub-conn-logo">
+                  <template x-if="$store.dbHub.logoFor(conn)"><img :src="$store.dbHub.logoFor(conn)" alt="" loading="lazy" /></template>
+                  <template x-if="!$store.dbHub.logoFor(conn)"><x-icon name="database"></x-icon></template>
+                </span>
+                <span class="dbhub-conn-title" x-text="conn.id || 'New connection'"></span>
+                <span class="dbhub-pill" :class="{ 'is-off': $store.dbHub.connPill(conn).off }" x-text="$store.dbHub.connPill(conn).label"></span>
+                <x-icon class="dbhub-conn-chev" name="expand_more"></x-icon>
+              </summary>
+              <div class="dbhub-conn-body">
+                <div class="field">
+                  <div class="field-label"><div class="field-title">Connection name</div><div class="field-description">Lowercase letters, numbers, underscores.</div></div>
+                  <div class="field-control"><input type="text" aria-label="Connection name" x-model="conn.id" @change="$store.dbHub.connEdited(conn)" placeholder="analytics_pg" /></div>
+                </div>
+                <div class="field">
+                  <div class="field-label"><div class="field-title">Connection URL or path</div><div class="field-description">Paste the connection details from your provider. Local databases can use a file path.</div></div>
+                  <div class="field-control">
+                    <div class="dbhub-dsn-row">
+                      <input aria-label="Connection string" :type="context.revealIdx === idx ? 'text' : 'password'" x-model="conn.dsn" @change="$store.dbHub.connEdited(conn)" :placeholder="$store.dbHub.dsnExample(conn.driver)" spellcheck="false" autocomplete="new-password" />
+                      <button type="button" class="btn" @click="context.revealIdx = context.revealIdx === idx ? null : idx" :title="context.revealIdx === idx ? 'Mask DSN' : 'Reveal DSN'">
+                        <span x-text="context.revealIdx === idx ? 'Hide' : 'Show'"></span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <template x-if="$store.dbHub.convertibleHint(conn.dsn)">
+                  <div class="dbhub-callout is-row">
+                    <span x-text="$store.dbHub.convertibleHint(conn.dsn)"></span>
+                    <button type="button" class="btn" :disabled="$store.dbHub.normalizing === idx" @click="$store.dbHub.normalizeDsn(config, idx)">
+                      <span x-text="$store.dbHub.normalizing === idx ? 'Converting…' : 'Convert to DSN'"></span>
+                    </button>
+                  </div>
+                </template>
+                <template x-if="$store.dbHub.rawSecretIn(conn.dsn)">
+                  <div class="dbhub-warn">
+                    <div class="dbhub-warn-title">This DSN holds a raw password — it would save as plain text.</div>
+                    <div class="dbhub-warn-row">
+                      <input type="text" :value="$store.dbHub.secretKeyValue(idx, conn)" @input="$store.dbHub._secretKeys[idx] = $event.target.value" spellcheck="false" />
+                      <button type="button" class="btn" :disabled="$store.dbHub.extracting === idx" @click="$store.dbHub.extractSecret(config, idx)">
+                        <x-icon name="key"></x-icon><span x-text="$store.dbHub.extracting === idx ? 'Moving…' : 'Move password to Secrets'"></span>
+                      </button>
+                    </div>
+                    <div class="dbhub-warn-hint">Stores the password as the key above, then swaps this field to a <code>§§secret(KEY)</code> placeholder. Test and Save after.</div>
+                  </div>
+                </template>
+                <template x-if="$store.dbHub.showApiKey(conn)">
+                <div class="field">
+                  <div class="field-label"><div class="field-title">API key</div><div class="field-description">If required by your service, store the key as §§secret(KEY).</div></div>
+                  <div class="field-control">
+                    <div class="dbhub-dsn-row">
+                      <input aria-label="Database API key" :type="context.revealKeyIdx === idx ? 'text' : 'password'" x-model="conn.options.api_key" placeholder="§§secret(KEY)" spellcheck="false" autocomplete="new-password" />
+                      <button type="button" class="btn" @click="context.revealKeyIdx = context.revealKeyIdx === idx ? null : idx" :title="context.revealKeyIdx === idx ? 'Mask key' : 'Reveal key'">
+                        <span x-text="context.revealKeyIdx === idx ? 'Hide' : 'Show'"></span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                </template>
+                <template x-if="$store.dbHub.rawOptionIn(conn)">
+                  <div class="dbhub-warn">
+                    <div class="dbhub-warn-title">This key would save as plain text.</div>
+                    <div class="dbhub-warn-row">
+                      <input type="text" :value="$store.dbHub.optKeyValue(idx, conn)" @input="$store.dbHub._optKeys[idx] = $event.target.value" spellcheck="false" />
+                      <button type="button" class="btn" :disabled="$store.dbHub.movingOpt === idx" @click="$store.dbHub.moveOptionSecret(config, idx)">
+                        <x-icon name="key"></x-icon><span x-text="$store.dbHub.movingOpt === idx ? 'Moving…' : 'Move to Secrets'"></span>
+                      </button>
+                    </div>
+                    <div class="dbhub-warn-hint">Stores the key, then swaps this field to a <code>§§secret(KEY)</code> placeholder. Test and Save after.</div>
+                  </div>
+                </template>
+                <details class="dbhub-advanced dbhub-cred" x-show="$store.dbHub.canStorePassword(conn)">
+                  <summary><span>Store an existing password</span></summary>
+                  <div class="dbhub-cred-row">
+                    <label class="dbhub-cred-field">
+                      <span>Database password</span>
+                      <input type="password" x-model="$store.dbHub.pwFor(idx, conn).password" autocomplete="new-password" spellcheck="false" />
+                    </label>
+                    <label class="dbhub-cred-field">
+                      <span>Secret key</span>
+                      <input type="text" x-model="$store.dbHub.pwFor(idx, conn).key" spellcheck="false" />
+                    </label>
+                    <button type="button" class="btn" :disabled="$store.dbHub.savingPw === idx" @click="$store.dbHub.savePassword(config, idx)">
+                      <x-icon name="key"></x-icon><span x-text="$store.dbHub.savingPw === idx ? 'Saving…' : 'Save password'"></span>
+                    </button>
+                  </div>
+                  <div class="dbhub-pw-hint">Saved to Agent Zero Secrets under this key — the DSN above will point at it.</div>
+                </details>
+                <div class="dbhub-access">
+                  <div class="dbhub-access-row">
+                    <div class="dbhub-access-label">
+                      <div class="field-title">Enabled</div>
+                      <div class="field-description">Agent Zero can use this connection.</div>
+                    </div>
+                    <label class="toggle"><input type="checkbox" :aria-label="'Enable ' + (conn.id || 'connection')" x-model="conn.enabled" @change="$store.dbHub.connEdited(conn)" /><span class="toggler"></span></label>
+                  </div>
+                  <div class="dbhub-access-row">
+                    <div class="dbhub-access-label">
+                      <div class="field-title">Writes</div>
+                      <div class="field-description">Use the default, restrict to reads, or allow changes.</div>
+                    </div>
+                    <div class="dbhub-segmented" role="group" aria-label="Write access">
+                      <button type="button" :class="{ 'is-on': $store.dbHub.readonlyValue(conn) === 'default' }" :aria-pressed="$store.dbHub.readonlyValue(conn) === 'default'" @click="$store.dbHub.setReadonly(conn, 'default'); $store.dbHub.connEdited(conn)">Use default</button>
+                      <button type="button" :class="{ 'is-on': $store.dbHub.readonlyValue(conn) === 'false' }" :aria-pressed="$store.dbHub.readonlyValue(conn) === 'false'" @click="$store.dbHub.setReadonly(conn, 'false'); $store.dbHub.connEdited(conn)">Read & write</button>
+                      <button type="button" :class="{ 'is-on': $store.dbHub.readonlyValue(conn) === 'true' }" :aria-pressed="$store.dbHub.readonlyValue(conn) === 'true'" @click="$store.dbHub.setReadonly(conn, 'true'); $store.dbHub.connEdited(conn)">Read only</button>
+                    </div>
+                  </div>
+                </div>
+                <details class="dbhub-advanced">
+                  <summary><span>Advanced connection options</span></summary>                <div class="field">
+                  <div class="field-label"><div class="field-title">Driver</div><div class="field-description" x-text="$store.dbHub.driverHint(conn.driver)"></div></div>
+                  <div class="field-control">
+                    <select aria-label="Database driver" x-model="conn.driver" x-init="$nextTick(() => { if (conn.driver) $el.value = conn.driver })" @change="$store.dbHub.connEdited(conn)">
+                      <option value="" disabled>Pick an engine…</option>
+                      <template x-for="name in $store.dbHub.driverNames()" :key="name">
+                        <option :value="name" x-text="$store.dbHub.driverLabel(name)"></option>
+                      </template>
+                    </select>
+                  </div>
+                </div>
+                <template x-if="!$store.dbHub.driverKnown(conn)">
+                  <div class="dbhub-warn">
+                    <div class="dbhub-warn-title" x-text="`Unknown driver '${conn.driver || '(empty)'}' — pick an engine above.`"></div>
+                  </div>
+                </template>
+                <div class="field">
+                  <div class="field-label"><div class="field-title">Purpose (optional)</div><div class="field-description">Describe what the agent should use this database for.</div></div>
+                  <div class="field-control"><input type="text" aria-label="Connection purpose" x-model="conn.description" @change="$store.dbHub.connEdited(conn)" placeholder="App auth data: users, orgs, sessions" maxlength="500" /></div>
+                </div>
+<label class="field-title" >Driver options (JSON)</label>
+                  <textarea aria-label="Advanced connection options" rows="3" spellcheck="false" :value="$store.dbHub.optionsText(conn)" @change="$store.dbHub.setOptions(conn, $event.target.value); $store.dbHub.connEdited(conn)" placeholder='{"database": "neo4j"}'></textarea>
+                </details>
+                <div class="dbhub-conn-actions">
+                  <button type="button" class="btn dbhub-primary" :disabled="$store.dbHub.testing === idx" @click="$store.dbHub.testConnection(config, idx)">
+                    <x-icon name="play_arrow"></x-icon><span x-text="$store.dbHub.testing === idx ? 'Testing…' : 'Test connection'"></span>
+                  </button>
+                  <button type="button" class="btn dbhub-danger" @click="$store.dbHub.removeConnection(config, idx, context)" title="Remove connection" :aria-label="'Remove ' + (conn.id || 'connection')">
+                    <x-icon name="delete"></x-icon><span>Remove</span>
+                  </button>
+                </div>
+              </div>
+            </details>
+          </template>
+          <div class="dbhub-muted dbhub-note">Connection tests do not save changes. Use Save at the bottom when you are ready.</div>
+        </section>
+
+        <div class="dbhub-section">
+          <div class="dbhub-section-head">
+            <div class="dbhub-section-heading">
+              <x-icon name="psychology"></x-icon>
+              <div>
+                <h3 class="dbhub-section-title">Agent memory</h3>
+                <div class="dbhub-section-desc">Optional. Choose where Agent Zero remembers information.</div>
+              </div>
+            </div>
+          </div>
+          <div class="dbhub-row-line">
+            <div class="dbhub-access-label">
+              <div class="field-title">Use database for memory</div>
+                  <div class="field-description">Save automatically prepares memory tables or collections in the selected databases for memory, recall, and background learning. Turning this off restores built-in storage.</div>
+            </div>
+            <label class="toggle"><input type="checkbox" aria-label="Use database for memory" x-model="config.memory_backend.enabled" :disabled="!config.memory_backend.enabled && !$store.dbHub.memoryCompatibility.compatible" aria-describedby="dbhub-memory-compatibility" /><span class="toggler"></span></label>
+          </div>
+          <p id="dbhub-memory-compatibility" class="field-description" x-show="!$store.dbHub.memoryCompatibility.compatible" x-text="$store.dbHub.memoryCompatibility.message"></p>
+          <div class="field" x-show="config.memory_backend.enabled">
+            <div class="field-label"><div class="field-title">Memory connections</div><div class="field-description">Choose one or more writable connections. Other databases remain available in the workspace.</div></div>
+            <div class="field-control">
+              <div class="dbhub-memconns">
+                <template x-for="conn in $store.dbHub.memoryConnections(config)" :key="conn.id">
+                  <label class="dbhub-memconn">
+                    <input type="checkbox" :checked="$store.dbHub.memoryHas(config, conn.id)" @change="$store.dbHub.toggleMemoryConn(config, conn.id)" />
+                    <span class="dbhub-conn-logo">
+                      <template x-if="$store.dbHub.logoFor(conn)"><img :src="$store.dbHub.logoFor(conn)" alt="" loading="lazy" /></template>
+                      <template x-if="!$store.dbHub.logoFor(conn)"><x-icon name="database"></x-icon></template>
+                    </span>
+                    <span class="dbhub-memconn-id" x-text="conn.id"></span>
+                  </label>
+                </template>
+                <template x-if="!(config.connections || []).length">
+                  <span class="dbhub-muted">Add a connection above first.</span>
+                </template>
+              </div>
+            </div>
+          </div>
+          <details class="dbhub-advanced" x-show="config.memory_backend.enabled"><summary>Memory storage & verification</summary>
+          <div class="field">
+            <div class="field-label"><div class="field-title">Collection prefix</div><div class="field-description">Areas map to collections like <code>mem_main</code>. Isolated projects and custom memory scopes add a stable suffix.</div></div>
+            <div class="field-control"><input type="text" aria-label="Memory collection prefix" x-model="config.memory_backend.prefix" placeholder="mem" spellcheck="false" /></div>
+          </div>
+
+          <button type="button" class="btn" :disabled="$store.dbHub.verifyingMemory" @click="$store.dbHub.verifyMemory()">
+            <x-icon name="fact_check"></x-icon><span x-text="$store.dbHub.verifyingMemory ? 'Verifying…' : 'Verify saved memory'"></span>
+          </button>
+          <div class="dbhub-muted dbhub-note">Save first. Verification creates any needed memory table/collection, writes one synthetic record per selected database, recalls it, and deletes it. Test connection above checks connectivity only.</div>
+          <div class="dbhub-muted dbhub-note">Existing memories are not moved automatically. Keep the Memory plugin enabled for recall tuning.</div>
+          </details>
+          <p class="dbhub-memory-state" x-text="$store.dbHub.memoryState(config)"></p>
+        </div>
+
+        <details class="dbhub-settings-advanced"><summary><x-icon name="tune"></x-icon>Advanced settings<span>Query limits and default access</span></summary><div class="dbhub-section">
+          <div class="field">
+            <div class="field-label"><div class="field-title">Read-only by default</div><div class="field-description">Writes are refused unless a connection opts in.</div></div>
+            <div class="field-control"><label class="toggle"><input type="checkbox" aria-label="Read-only by default" x-model="config.readonly_default" /><span class="toggler"></span></label></div>
+          </div>
+          <div class="field">
+            <div class="field-label"><div class="field-title">Max rows</div><div class="field-description">Query results truncate here.</div></div>
+            <div class="field-control"><input type="number" aria-label="Maximum query rows" x-model.number="config.max_rows" min="1" /></div>
+          </div>
+          <div class="field">
+            <div class="field-label"><div class="field-title">Query timeout (s)</div><div class="field-description">Per-operation bound.</div></div>
+            <div class="field-control"><input type="number" aria-label="Query timeout in seconds" x-model.number="config.query_timeout_s" min="1" /></div>
+          </div>
+          <div class="field">
+            <div class="field-label"><div class="field-title">Database drivers</div><div class="field-description">Install or repair driver packages against this Agent Zero version. Restart Agent Zero afterward.</div></div>
+            <div class="field-control"><button type="button" class="btn" :disabled="$store.dbHub.installing" @click="$store.dbHub.installDrivers()"><x-icon name="build"></x-icon><span x-text="$store.dbHub.installing ? 'Installing…' : 'Install drivers'"></span></button></div>
+          </div>
+        </div>
+        </details>
+      </div>
+    </template>
+  </div>
+  <style>
+    .dbhub-settings { display: flex; flex-direction: column; gap: 0.9rem; }
+    .dbhub-muted { color: var(--color-text-secondary); line-height: 1.5; }
+    .dbhub-note { font-size: var(--font-size-small); }
+    .dbhub-hero { display: flex; gap: 0.8rem; align-items: center; }
+    .dbhub-hero-logo {
+      width: 2.6rem;
+      height: 2.6rem;
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.7rem;
+      background: color-mix(in srgb, var(--color-highlight) 14%, var(--color-background) 86%);
+    }
+    .dbhub-hero-title { font-size: 1.25rem; font-weight: 800; line-height: 1.3; }
+    .dbhub-section {
+      border: 1px solid var(--color-border);
+      border-radius: 14px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .dbhub-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .dbhub-section .field {
+      padding: 8px 0;
+    }
+    .dbhub-section-heading { display: flex; align-items: flex-start; gap: 0.6rem; min-width: 0; }
+    .dbhub-section-title { font-weight: 800; }
+    .dbhub-section-desc { color: var(--color-text-secondary); font-size: var(--font-size-small); line-height: 1.45; }
+    .dbhub-catalog {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+      gap: 0.6rem;
+    }
+    .dbhub-tile {
+      border: 1px solid var(--color-border);
+      border-radius: 0.6rem;
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 0;
+      font: inherit;
+      color: inherit;
+      text-align: left;
+      background: transparent;
+      cursor: pointer;
+      appearance: none;
+      box-shadow:
+        0 1px 2px rgb(0 0 0 / 0.25),
+        0 4px 16px -6px rgb(0 0 0 / 0.35);
+      transition: border-color 0.16s ease, box-shadow 0.2s ease, background 0.16s ease;
+    }
+    .dbhub-tile:hover {
+      border-color: color-mix(in srgb, var(--color-highlight) 55%, var(--color-border) 45%);
+      background: color-mix(in srgb, var(--color-background) 94%, white 6%);
+      box-shadow:
+        0 2px 4px rgb(0 0 0 / 0.3),
+        0 10px 32px -8px rgb(0 0 0 / 0.3);
+    }
+    .dbhub-tile.is-live {
+      border-color: color-mix(in srgb, #4ade80 55%, var(--color-border) 45%);
+      box-shadow:
+        0 1px 2px rgb(0 0 0 / 0.25),
+        0 8px 28px -8px rgb(0 0 0 / 0.3);
+    }
+    .dbhub-tile.is-live:hover {
+      border-color: color-mix(in srgb, #4ade80 70%, var(--color-border) 30%);
+      box-shadow:
+        0 2px 4px rgb(0 0 0 / 0.3),
+        0 12px 36px -8px rgb(0 0 0 / 0.35);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .dbhub-tile { transition: none; }
+    }
+    .dbhub-tile:focus-visible {
+      outline: 2px solid var(--color-highlight);
+      outline-offset: 2px;
+    }
+    .dbhub-tile-top { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+    .dbhub-tile-logo {
+      width: 2.4rem;
+      height: 2.4rem;
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.55rem;
+      background: color-mix(in srgb, var(--color-background) 80%, white 20%);
+      overflow: hidden;
+    }
+    .dbhub-tile-logo img { width: 1.9rem; height: 1.9rem; object-fit: contain; }
+    .dbhub-tile-logo.bleed { padding: 0; }
+    .dbhub-tile-logo.bleed img { width: 100%; height: 100%; object-fit: cover; }
+    .dbhub-tile-logo.dark { background: #141414; }
+    .dbhub-tile-logo.dark x-icon { color: #f2f2f2; }
+    .dbhub-tile-logo x-icon { font-size: 1.5rem; }
+    .dbhub-tile-name { font-weight: 800; font-size: 0.92rem; overflow-wrap: anywhere; }
+    .dbhub-tile-blurb {
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-small);
+      line-height: 1.45;
+      min-height: calc(1.45em * 3);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .dbhub-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: var(--font-size-small);
+      color: var(--color-text-secondary);
+      margin-top: auto;
+    }
+    .dbhub-status-dot {
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 999px;
+      flex: 0 0 auto;
+      background: var(--color-text-secondary);
+    }
+    .dbhub-status.tone-ready .dbhub-status-dot { background: #4ade80; }
+    .dbhub-status.tone-live .dbhub-status-dot { background: #4ade80; }
+    .dbhub-status.tone-live { color: #4ade80; }
+    .dbhub-status.tone-lazy .dbhub-status-dot { background: #fbbf24; }
+    .dbhub-status.tone-missing .dbhub-status-dot { background: #f87171; }
+    .dbhub-callout {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-start;
+      border-radius: 12px;
+      padding: 0.7rem 0.9rem;
+      background: color-mix(in srgb, var(--color-background) 88%, white 12%);
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-small);
+      line-height: 1.5;
+    }
+    .dbhub-callout.is-row { align-items: center; justify-content: space-between; gap: 0.8rem; }
+    .dbhub-empty { border-radius: 0.5rem; padding: 1rem; background: color-mix(in srgb, var(--color-background) 94%, white 6%); }
+    .dbhub-empty-title { font-weight: 700; }
+    .dbhub-empty-copy { margin-top: 0.35rem; color: var(--color-text-secondary); line-height: 1.5; }
+    .dbhub-conn { border: 1px solid var(--color-border); border-radius: 0.6rem; overflow: hidden; scroll-margin-top: 1rem; }
+    .dbhub-conn > summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.7rem 0.8rem;
+      cursor: pointer;
+      min-width: 0;
+    }
+    .dbhub-conn > summary::-webkit-details-marker { display: none; }
+    .dbhub-conn-logo {
+      width: 2rem;
+      height: 2rem;
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.45rem;
+      background: color-mix(in srgb, var(--color-background) 80%, white 20%);
+      overflow: hidden;
+    }
+    .dbhub-conn-logo img { width: 1.55rem; height: 1.55rem; object-fit: contain; }
+    .dbhub-conn-title { font-weight: 700; overflow-wrap: anywhere; min-width: 0; }
+    .dbhub-conn[open] > summary .dbhub-conn-title { overflow-wrap: anywhere; }
+    .dbhub-pill {
+      margin-left: auto;
+      flex: 0 0 auto;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 0.14rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      background: transparent;
+      max-width: 12rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .dbhub-pill.is-off { opacity: 0.65; }
+    .dbhub-conn-chev { flex: 0 0 auto; transition: transform 0.18s ease; opacity: 0.7; }
+    .dbhub-conn[open] .dbhub-conn-chev { transform: rotate(180deg); opacity: 1; }
+    .dbhub-conn-body { padding: 0 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .dbhub-access {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid color-mix(in srgb, var(--color-border) 24%, transparent);
+      margin-top: 0.5rem;
+    }
+    .dbhub-access-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.6rem 0;
+    }
+    .dbhub-access-row + .dbhub-access-row {
+      border-top: 1px solid color-mix(in srgb, var(--color-border) 24%, transparent);
+    }
+    .dbhub-access-label { min-width: 0; }
+    .dbhub-settings .toggle { flex: 0 0 60px; min-width: 60px; }
+    .dbhub-row-line > .dbhub-access-label { flex: 1 1 0; }
+    .dbhub-row-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.6rem 0;
+    }
+    .dbhub-segmented {
+      display: inline-flex;
+      flex: 0 0 auto;
+      gap: 2px;
+      padding: 2px;
+      border: 1px solid var(--color-border);
+      border-radius: 999px;
+    }
+    .dbhub-segmented button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--color-text-secondary);
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.3rem 0.75rem;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .dbhub-segmented button:hover { color: var(--color-text); }
+    .dbhub-segmented button.is-on {
+      background: color-mix(in srgb, var(--color-highlight) 24%, transparent);
+      color: var(--color-text);
+    }
+    .dbhub-segmented button:focus-visible {
+      outline: 2px solid var(--color-highlight);
+      outline-offset: 2px;
+    }
+    .dbhub-advanced { margin-top: 0.5rem; }
+    .dbhub-advanced summary { cursor: pointer; font-weight: 700; }
+    .dbhub-advanced textarea { width: 100%; font-family: var(--font-family-mono, monospace); }
+    .dbhub-conn-actions { display: flex; gap: 0.45rem; align-items: center; margin-top: 0.6rem; }
+    .dbhub-memconns { display: flex; flex-direction: column; gap: 0.35rem; }
+    .dbhub-memconn {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      border: 1px solid var(--color-border);
+      border-radius: 0.5rem;
+      padding: 0.45rem 0.6rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .dbhub-memconn:hover {
+      border-color: color-mix(in srgb, var(--color-highlight) 55%, var(--color-border) 45%);
+    }
+    .dbhub-memconn-id { overflow-wrap: anywhere; min-width: 0; }
+    .dbhub-dsn-row { display: flex; gap: 0.45rem; align-items: stretch; }
+    .dbhub-dsn-row input { flex: 1 1 auto; min-width: 0; }
+    .dbhub-cred-row { display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap; margin-top: 0.5rem; }
+    .dbhub-cred-field { display: flex; flex-direction: column; gap: 0.25rem; flex: 1 1 10rem; min-width: 0; font-size: var(--font-size-small); font-weight: 700; color: var(--color-text-secondary); }
+    .dbhub-cred-field input { font-weight: 400; }
+    .dbhub-pw-hint { color: var(--color-text-secondary); font-size: var(--font-size-small); line-height: 1.45; margin-top: 0.5rem; }
+    .dbhub-warn {
+      border: 1px solid color-mix(in srgb, #fbbf24 55%, var(--color-border) 45%);
+      border-radius: 0.6rem;
+      padding: 0.7rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .dbhub-warn-title { font-weight: 700; }
+    .dbhub-warn-row { display: flex; gap: 0.45rem; align-items: stretch; }
+    .dbhub-warn-row input { flex: 1 1 auto; min-width: 0; }
+    .dbhub-warn-hint { color: var(--color-text-secondary); font-size: var(--font-size-small); line-height: 1.45; }
+    @media (max-width: 640px) {
+      .dbhub-catalog { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); }
+      .dbhub-access-row { align-items: flex-start; flex-direction: column; gap: 0.5rem; }
+      .dbhub-pill { max-width: 8rem; }
+    }
+  </style>
+</body>
+</html>
