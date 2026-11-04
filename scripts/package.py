@@ -6,7 +6,7 @@ import json
 import zipfile
 
 ROOT_FILES = {"plugin.yaml", "default_config.yaml", "hooks.py", "README.md", "LICENSE", "thumbnail.jpg", ".gitignore"}
-SOURCE_DIRS = {"api", "extensions", "helpers", "prompts", "tools", "webui", "tests", "docs", "scripts"}
+SOURCE_DIRS = {"api", "extensions", "helpers", "prompts", "tools", "webui", "tests", "docs", "scripts", "memory_modules"}
 EXTENSIONS = {".py", ".md", ".mjs", ".js", ".ts", ".html", ".css", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".yaml", ".yml", ".json"}
 
 
@@ -17,7 +17,7 @@ def source_files(root):
         rel = path.relative_to(root)
         if str(rel) not in ROOT_FILES and rel.parts[0] not in SOURCE_DIRS:
             continue
-        if any(p.startswith(".") or p in {"__pycache__", "node_modules", "deps"} for p in rel.parts) and str(rel) != ".gitignore":
+        if any(p.startswith(".") or p in {"__pycache__", "node_modules", "deps", "dist"} for p in rel.parts) and str(rel) != ".gitignore":
             continue
         if path.is_symlink():
             raise ValueError(f"Source package must not contain symlinks: {rel}")

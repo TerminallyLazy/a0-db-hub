@@ -51,6 +51,17 @@ class Connections(ApiHandler):
         project_name = str(input.get("project_name", "") or "")
         agent_profile = str(input.get("agent_profile", "") or "")
         try:
+            if action in {'review_spacetime_memory', 'create_spacetime_memory'}:
+                from flask import session
+                import secrets
+                from usr.plugins.db_hub.helpers import spacetime_memory_setup
+                owner = session.get('dbhub_memory_setup_owner')
+                if not owner:
+                    owner = secrets.token_urlsafe(24)
+                    session['dbhub_memory_setup_owner'] = owner
+                if action == 'review_spacetime_memory':
+                    return {'ok': True, **await spacetime_memory_setup.review_setup(owner, input.get('connection'), project_name, agent_profile)}
+                return await spacetime_memory_setup.create_storage(owner, str(input.get('token') or ''), str(input.get('connection') or ''), project_name, agent_profile)
             if action == "verify_memory":
                 from usr.plugins.db_hub.helpers.verification import verify_memory
                 result = await verify_memory(project_name, agent_profile)

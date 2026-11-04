@@ -119,7 +119,7 @@
           <template x-for="(conn, idx) in config.connections" :key="idx">
             <details class="dbhub-conn" :id="'dbhub-conn-' + conn.id" :open="context.openIdx === idx" @toggle="context.openIdx = $event.target.open ? idx : (context.openIdx === idx ? null : context.openIdx)">
               <summary>
-                <span class="dbhub-conn-logo">
+                <span class="dbhub-conn-logo" :class="{dark: conn.driver === 'spacetimedb'}">
                   <template x-if="$store.dbHub.logoFor(conn)"><img :src="$store.dbHub.logoFor(conn)" alt="" loading="lazy" /></template>
                   <template x-if="!$store.dbHub.logoFor(conn)"><x-icon name="database"></x-icon></template>
                 </span>
@@ -168,6 +168,31 @@
                     <input aria-label="SpacetimeDB database" x-model="conn.options.database" @change="$store.dbHub.connEdited(conn)" placeholder="my-database" spellcheck="false" />
                     <span class="field-description">Use the server URL above. Tables and reducers come from the published module. For a host server reached from Docker, use host.docker.internal instead of localhost.</span>
                   </label>
+                </template>
+                <template x-if="conn.driver === 'spacetimedb'">
+                  <details class="dbhub-advanced">
+                    <summary>Agent memory storage</summary>
+                    <p class="field-description">Memory uses a dedicated private database on this SpacetimeDB server. Creating it can use provider storage or quota. Your application module is kept separate.</p>
+                    <label class="dbhub-cred-field"><span>Memory database name or identity</span>
+                      <input aria-label="SpacetimeDB memory database" x-model="conn.options.memory_database" @change="$store.dbHub.connEdited(conn)" placeholder="Create storage below, or enter an existing DB Hub memory database" spellcheck="false" />
+                    </label>
+                    <button type="button" class="btn" :disabled="!!conn.options.memory_database || $store.dbHub.memorySetupFor(conn).busy" @click="$store.dbHub.reviewSpacetimeMemory(config, idx)">Review new memory storage</button>
+                    <template x-if="$store.dbHub.memorySetupFor(conn).review">
+                      <div class="dbhub-warn">
+                        <p x-text="$store.dbHub.memorySetupFor(conn).review.notice"></p>
+                        <p>Server: <span x-text="$store.dbHub.memorySetupFor(conn).review.server"></span></p>
+                        <button type="button" class="btn dbhub-primary" :disabled="$store.dbHub.memorySetupFor(conn).busy" @click="$store.dbHub.createSpacetimeMemory(config, idx)">Create private memory database</button>
+                      </div>
+                    </template>
+                    <template x-if="$store.dbHub.memorySetupFor(conn).recovery">
+                      <div class="dbhub-note">
+                        <p>A database was already created for this connection. Attach it, then Test and Save.</p>
+                        <code x-text="$store.dbHub.memorySetupFor(conn).recovery"></code>
+                        <button type="button" class="btn" @click="$store.dbHub.attachSpacetimeMemory(config, idx)">Use created memory database</button>
+                      </div>
+                    </template>
+                    <p class="field-description">Use a stable Bearer token and Read &amp; write access. After preparation, Test, select this connection under Agent memory, and Save. Creation does not save your draft settings.</p>
+                  </details>
                 </template>
                 <template x-if="$store.dbHub.showApiKey(conn)">
                 <div class="field">
@@ -284,9 +309,11 @@
               <div class="field-title">Use database for memory</div>
                   <div class="field-description">Save automatically prepares memory tables or collections in the selected databases for memory, recall, and background learning. Turning this off restores built-in storage.</div>
             </div>
-            <label class="toggle"><input type="checkbox" aria-label="Use database for memory" x-model="config.memory_backend.enabled" :disabled="!config.memory_backend.enabled && !$store.dbHub.memoryCompatibility.compatible" aria-describedby="dbhub-memory-compatibility" /><span class="toggler"></span></label>
+            <label class="toggle"><input type="checkbox" aria-label="Use database for memory" x-model="config.memory_backend.enabled" :disabled="$store.dbHub.memoryToggleDisabled(config)" aria-describedby="dbhub-memory-compatibility dbhub-memory-availability dbhub-memory-save" /><span class="toggler"></span></label>
           </div>
           <p id="dbhub-memory-compatibility" class="field-description" x-show="!$store.dbHub.memoryCompatibility.compatible" x-text="$store.dbHub.memoryCompatibility.message"></p>
+          <p id="dbhub-memory-availability" class="field-description" x-show="$store.dbHub.memoryAvailability(config)" x-text="$store.dbHub.memoryAvailability(config)"></p>
+          <p id="dbhub-memory-save" class="field-description">Select supported memory connections and click Save at the bottom. Leaving without saving discards the toggle change.</p>
           <div class="field" x-show="config.memory_backend.enabled">
             <div class="field-label"><div class="field-title">Memory connections</div><div class="field-description">Choose one or more writable connections. Other databases remain available in the workspace.</div></div>
             <div class="field-control">
@@ -294,7 +321,7 @@
                 <template x-for="conn in $store.dbHub.memoryConnections(config)" :key="conn.id">
                   <label class="dbhub-memconn">
                     <input type="checkbox" :checked="$store.dbHub.memoryHas(config, conn.id)" @change="$store.dbHub.toggleMemoryConn(config, conn.id)" />
-                    <span class="dbhub-conn-logo">
+                    <span class="dbhub-conn-logo" :class="{dark: conn.driver === 'spacetimedb'}">
                       <template x-if="$store.dbHub.logoFor(conn)"><img :src="$store.dbHub.logoFor(conn)" alt="" loading="lazy" /></template>
                       <template x-if="!$store.dbHub.logoFor(conn)"><x-icon name="database"></x-icon></template>
                     </span>

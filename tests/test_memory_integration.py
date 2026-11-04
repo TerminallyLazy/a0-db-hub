@@ -50,6 +50,25 @@ class ValidationTests(unittest.TestCase):
 
 
 class MemoryIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_local_qdrant_setup_and_agent_handles_share_storage_safely(self):
+        import tempfile
+        from usr.plugins.db_hub.helpers import bootstrap
+        if not bootstrap.is_importable("qdrant_client"):
+            self.skipTest("qdrant client not installed")
+        from usr.plugins.db_hub.helpers.drivers.qdrant import QdrantDriver
+        first, second = QdrantDriver(), QdrantDriver()
+        with tempfile.TemporaryDirectory() as path:
+            try:
+                await first.connect({}, path)
+                await second.connect({}, path)
+                await first.ensure_collection('shared', 3)
+                await first.vector_upsert('shared', [{'id': 'logical', 'vector': [1., 0., 0.], 'payload': {'text': 'synthetic'}}])
+                await first.close()
+                self.assertEqual((await second.vector_search('shared', [1., 0., 0.], 10))['matches'][0]['text'], 'synthetic')
+            finally:
+                await first.close()
+                await second.close()
+
     async def test_real_qdrant_save_recall_delete(self):
         from usr.plugins.db_hub.helpers import bootstrap
         if not bootstrap.is_importable('qdrant_client'):

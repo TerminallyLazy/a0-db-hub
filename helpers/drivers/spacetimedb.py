@@ -9,7 +9,8 @@ import re
 import time
 from urllib.parse import quote, urlsplit
 
-from usr.plugins.db_hub.helpers.base import DbDriver, DbHubError, ReadOnlyError, is_write_statement
+from usr.plugins.db_hub.helpers.base import VectorDriver, DbHubError, ReadOnlyError, is_write_statement
+from usr.plugins.db_hub.helpers.drivers.spacetimedb_memory import SpacetimeMemory
 
 DRIVER_NAME = "spacetimedb"
 _CALL = re.compile(r"CALL\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?", re.IGNORECASE)
@@ -65,18 +66,21 @@ def encode_arg(value, typ, types, depth=0):
     return value
 
 
-class SpacetimeDBDriver(DbDriver):
-    capabilities = {"sql", "reducers"}
+class SpacetimeDBDriver(SpacetimeMemory, VectorDriver):
+    capabilities = {"sql", "reducers", "vector"}
     required_config_keys = ("database",)
 
     def __init__(self):
         self._client = None
         self._path = ""
+        self._options = {}
+        self._memory_path = ""
 
     async def connect(self, conn_cfg: dict, resolved_dsn: str) -> None:
         import httpx
 
         options = conn_cfg or {}
+        self._options = dict(options)
         origin = (resolved_dsn or "").strip().rstrip("/")
         try:
             url = urlsplit(origin)
@@ -94,6 +98,10 @@ class SpacetimeDBDriver(DbDriver):
         if not isinstance(token, str) or "\n" in token or "\r" in token:
             raise DbHubError("SpacetimeDB options.auth_token must be a Bearer token from Agent Zero Secrets.")
         self._path = "/v1/database/" + quote(database, safe="")
+        memory_database = options.get('memory_database', '')
+        if memory_database and (not isinstance(memory_database, str) or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,255}', memory_database)):
+            raise DbHubError('options.memory_database must be a SpacetimeDB database name or identity.')
+        self._memory_path = '/v1/database/' + quote(memory_database, safe='') if memory_database else ''
         if self._client is not None:
             await self.close()
         self._client = httpx.AsyncClient(
@@ -101,13 +109,13 @@ class SpacetimeDBDriver(DbDriver):
             headers={"Authorization": "Bearer " + token} if token else {},
         )
 
-    async def _request(self, method, suffix="", **kwargs):
+    async def _request(self, method, suffix="", database_path=None, **kwargs):
         import httpx
 
         if self._client is None:
             raise DbHubError("SpacetimeDB connection is closed.")
         try:
-            response = await self._client.request(method, self._path + suffix, **kwargs)
+            response = await self._client.request(method, (database_path or self._path) + suffix, **kwargs)
         except httpx.HTTPError as exc:
             # Never echo request headers, URLs or provider bodies (may contain tokens).
             note = " A submitted write may have committed; read back before retrying." if method == "POST" else ""
@@ -133,8 +141,10 @@ class SpacetimeDBDriver(DbDriver):
         # Verify the configured database AND its schema, not merely host reachability.
         info = self._json(await self._request("GET"))
         await self.list_schema()
+        memory = await self.memory_info() if self._memory_path else None
         return {"ok": True, "latency_ms": round((time.monotonic() - started) * 1000, 1),
                 "database_identity": info.get("database_identity"),
+                "memory_ready": memory is not None,
                 "note": "Database and schema accessible. Query/reducer permissions depend on the authenticated identity and module."}
 
     async def _raw_schema(self):

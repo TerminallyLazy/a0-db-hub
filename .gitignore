@@ -15,3 +15,5 @@ secrets.env
 *.db
 *.sqlite*
 dist/
+node_modules/
+.memory-setups/

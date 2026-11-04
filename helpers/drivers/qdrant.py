@@ -5,10 +5,17 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from pathlib import Path
+import threading
 
 from usr.plugins.db_hub.helpers.base import DbHubError, VectorDriver
 
 DRIVER_NAME = "qdrant"
+
+# Embedded Qdrant exclusively locks its directory. Setup hooks, connection tests
+# and agent loops may coexist in one framework process; share its local handle.
+_LOCAL_CLIENTS = {}
+_LOCAL_GUARD = threading.RLock()
 
 
 def point_id(raw_id):
@@ -34,6 +41,8 @@ class QdrantDriver(VectorDriver):
     def __init__(self):
         self._client = None
         self._options: dict = {}
+        self._local_key = None
+        self._local_lock = None
 
     async def connect(self, conn_cfg: dict, resolved_dsn: str) -> None:
         from qdrant_client import QdrantClient
@@ -53,12 +62,25 @@ class QdrantDriver(VectorDriver):
                 api_key=self._options.get("api_key") or None,
             )
         elif dsn:
-            self._client = QdrantClient(path=dsn)
+            key = str(Path(dsn).expanduser().resolve())
+            with _LOCAL_GUARD:
+                item = _LOCAL_CLIENTS.get(key)
+                if item is None:
+                    item = {'client': QdrantClient(path=key), 'refs': 0, 'lock': threading.RLock()}
+                    _LOCAL_CLIENTS[key] = item
+                item['refs'] += 1
+                self._client = item['client']
+                self._local_key, self._local_lock = key, item['lock']
         else:
             raise DbHubError("Qdrant dsn must be an http(s):// URL or a local path.")
 
     def _run(self, func, *args, **kwargs):
-        return asyncio.to_thread(func, *args, **kwargs)
+        def run():
+            if self._local_lock is not None:
+                with self._local_lock:
+                    return func(*args, **kwargs)
+            return func(*args, **kwargs)
+        return asyncio.to_thread(run)
 
     async def _guarded(self, coro_fn, not_found_msg=""):
         """Run a client call, translating HTTP errors into guidance."""
@@ -226,10 +248,21 @@ class QdrantDriver(VectorDriver):
     async def close(self) -> None:
         if self._client is not None:
             try:
-                await self._run(self._client.close)
+                if self._local_key is not None:
+                    def release():
+                        with _LOCAL_GUARD:
+                            item = _LOCAL_CLIENTS[self._local_key]
+                            item['refs'] -= 1
+                            if item['refs'] == 0:
+                                item['client'].close()
+                                del _LOCAL_CLIENTS[self._local_key]
+                    await self._run(release)
+                else:
+                    await self._run(self._client.close)
             except Exception:
                 pass
             self._client = None
+            self._local_key = self._local_lock = None
 
 
 def create() -> QdrantDriver:
