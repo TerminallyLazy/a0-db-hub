@@ -192,9 +192,16 @@ class SpacetimeDBTests(unittest.IsolatedAsyncioTestCase):
                     await workspace.execute({**call, 'allow_writes': allow, 'confirmed': confirm})
             self.assertTrue((await workspace.execute({**call, 'allow_writes': True, 'confirmed': True}))['ok'])
 
-    async def test_memory_is_not_advertised_and_tokens_require_secrets(self):
-        self.assertNotIn('spacetimedb', drivers.MEMORY_DRIVERS)
+    async def test_memory_requires_prepared_storage_and_tokens_require_secrets(self):
+        self.assertIn('spacetimedb', drivers.MEMORY_DRIVERS)
         cfg = settings()
+        cfg['connections'][0]['readonly'] = False
+        cfg['memory_backend'] = {'enabled': True, 'connections': [{'connection': 'st'}]}
+        with self.assertRaisesRegex(ValueError, 'memory database'):
+            config.normalize_for_save(cfg)
+        cfg['connections'][0]['options']['memory_database'] = 'prepared'
+        with self.assertRaisesRegex(ValueError, 'Bearer token'):
+            config.normalize_for_save(cfg)
         cfg['connections'][0]['options']['auth_token'] = 'plain-token'
         with self.assertRaisesRegex(ValueError, 'auth_token'):
             config.normalize_for_save(cfg)

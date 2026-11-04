@@ -169,8 +169,8 @@ async def _bound(agent, connection: str, scope: tuple[str, str] | None = None):
         raise DbHubError(
             f"Memory backend connection '{connection}' "
             f"({bound.conn_cfg['driver']}) is not vector-capable. "
-            "Pick a vector store: postgres+pgvector, qdrant, lancedb, "
-            "chromadb, neo4j, redis, pinecone, milvus, weaviate, mongodb.")
+            "Pick a supported memory store: Postgres+pgvector (including Neon/Supabase), "
+            "Qdrant, LanceDB, ChromaDB, or prepared SpacetimeDB.")
     return bound, info
 
 

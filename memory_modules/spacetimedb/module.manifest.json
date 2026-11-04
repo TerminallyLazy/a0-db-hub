@@ -1,0 +1,10 @@
+{
+  "protocol": 1,
+  "sdk": "2.14.0",
+  "sha256": "cf965524f1032aa9e17f9041d7e570a98a8c0d210d5b26e0d760874efac9a109",
+  "inputs": {
+    "src/index.ts": "52a6ae2abe73cc56b6cd8260440382074f4a44768c7027683d6f22c5a6985f83",
+    "package.json": "2fa76091f10a609c67acdd10a2dee8f99532cf3ea1eafc65d113e7e9db3a29f8",
+    "tsconfig.json": "8a5e6fdbe5116c3c5cdaf00aa422d83016533ba31848271dd8cb82f05502e5fb"
+  }
+}

@@ -1,12 +1,25 @@
 # Release verification
 
-Database Hub **1.0.0**, verified against Agent Zero **v2.14** on 2026-10-13. Source and installable ZIP: [a0-db-hub](https://github.com/TerminallyLazy/a0-db-hub) and [v1.0.0 release](https://github.com/TerminallyLazy/a0-db-hub/releases/tag/v1.0.0). Plugin Index submission and maintainer acceptance are separate from source publication.
+Database Hub **1.2.0** source/ZIP verified against Agent Zero **v2.14** on 2026-11-04. See [a0-db-hub](https://github.com/TerminallyLazy/a0-db-hub) for source and published releases. The older v1.0.0 release ZIP predates SpacetimeDB. Plugin Index refresh, pull-request merge and release publication are separate steps.
 
 ## Required Agent Zero core
 
 The release baseline is upstream `main` / tag `v2.14`, commit `ff2a5b9c9c4e490ba38dd7c313e779510bb2071a`, with the framework Python 3.12 runtime. It includes [Agent Zero PR #1943](https://github.com/agent0ai/agent-zero/pull/1943) and the follow-up provider/profile precedence fix. No manual core patch is needed. The capability check remains authoritative if other plugins or profiles override memory behavior.
 
 Database Hub checks the core capability and actual selection of all four memory tools and all five memory hooks in the chosen scope. It refuses memory activation on incompatible cores or conflicting profile overrides. A distinct early hook also stops an already-enabled memory configuration before built-in storage can silently run. Database browsing is available without enabling database memory.
+
+## Memory support 1.2.0 verification (2026-11-04)
+
+- **182 Python tests plus 66 subtests passed, with no skips or excluded fixtures**, from the installable source ZIP in a disposable container containing the exact v2.14 framework source. **24 JavaScript tests passed** for settings/setup/workspace behavior. All packaged source bytes matched the ZIP manifest; all tracked framework source files matched the exact v2.14 archive.
+- Real stores: local PostgreSQL 16 with pgvector; persistent local Qdrant client **1.19.1**, LanceDB **0.39.0**, ChromaDB **1.5.9**; local SpacetimeDB server/SDK **2.14.0**. PostgreSQL covers the common pgvector implementation used by Neon/Supabase; managed-provider credentials, networking and service configuration were not re-certified.
+- Each backend used real scoped settings save/reopen, Secret resolution where applicable, all four `Agent.get_tool` memory routes and execution/history hooks, all three memory areas, framework-selected automatic recall classes, and background-learning callbacks. The built-in `Memory.get` entry point was guarded against unintended access. Synthetic embeddings were deterministic 3-dimensional vectors; utility output was deterministic JSON. No model inference was used.
+- Verified cosine threshold and area filters, delete-by-ID, forget-by-query, project namespace separation on the same storage, connection pool close/reopen persistence, disabling with retained records and restored built-in routing, re-enabling with records intact, and the saved-settings synthetic memory verifier.
+- SpacetimeDB additionally passed real reviewed POST creation of a separate private memory database, protocol readiness, durable identity recovery, same-collection/same-ID isolation between authenticated callers, non-owner private-SQL denial, dimension mismatch, atomic batch rollback, bounded paging, explicit scan-limit failure and rollback of filtered deletion. Unit checks cover session/scope/connection/module/credential review binding, single use, duplicate-creation prevention and unknown-outcome holds.
+- Existing-backend checks found and fixed embedded Qdrant's overlapping-client directory lock: local handles now share a reference-counted, serialized client within one process. Separate processes still require Qdrant server. Dependency installation now caps Arrow below 24 when the framework supplies NumPy 1.x, after newer Arrow failed its NumPy ABI import in the disposable environment. Repair uses the existing **Install drivers** control and preserves shared framework packages.
+- Tested private dependencies include asyncpg **0.31.0**, Arrow **23.0.1**, DuckDB **1.5.6** and SQLAlchemy **2.1.6**. Framework NumPy **1.26.4**, OpenAI **2.54.0**, LiteLLM **1.104.0** and tokenizers **0.22.2** remained unchanged; there were no shared/private version conflicts.
+- Rebuilt/typechecked the memory module with TypeScript **7.0.2** and normalized bundled paths; repeat builds produced the same SHA-256. Packaging includes the module, source, manifest and third-party notices; dependencies, setup receipts, credentials and generated build directories are excluded.
+
+These are local Agent Zero execution/storage checks. They do not certify Maincloud, new cloud-provider acceptance, browser-rendered UI, real model recall quality or the full Agent Zero core test suite. The running user instance and its settings were untouched. Test containers, local in-memory SpacetimeDB server, newly pulled pgvector image and temporary dependency/data trees are removed after verification; the ZIP and receipts are retained.
 
 ## SpacetimeDB 1.1.0 source verification (2026-11-04)
 

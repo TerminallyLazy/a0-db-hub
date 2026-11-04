@@ -44,6 +44,17 @@ class CompatibilityTests(unittest.TestCase):
 
 
 class DependencyTests(unittest.TestCase):
+    def test_numpy_one_constrains_arrow_without_replacing_framework(self):
+        for numpy, expected in [('1.26.4', True), ('2.0.0', False)]:
+            with self.subTest(numpy=numpy), tempfile.TemporaryDirectory() as path:
+                def install(args, **kwargs):
+                    constraints = Path(args[args.index('--constraint') + 1]).read_text()
+                    self.assertIn('numpy==' + numpy, constraints)
+                    self.assertEqual('pyarrow<24' in constraints, expected)
+                    return NS(returncode=1, stderr='', stdout='')
+                with patch.object(bootstrap, 'deps_dir', return_value=str(Path(path) / 'deps')), patch.object(bootstrap, 'framework_versions', return_value={'numpy': numpy}), patch.object(bootstrap.subprocess, 'run', side_effect=install):
+                    with self.assertRaises(RuntimeError): bootstrap.pip_install(bootstrap.BASE_DEPS)
+
     def test_plugin_packages_do_not_precede_framework_paths(self):
         with tempfile.TemporaryDirectory() as path, patch.object(bootstrap, 'deps_dir', return_value=path), patch.object(bootstrap, '_path_ready', False), patch.object(sys, 'path', [path, *sys.path]):
             before = [p for p in sys.path if p != path]
@@ -72,7 +83,10 @@ class PackageTests(unittest.TestCase):
             "memory_save", "memory_load", "memory_delete", "memory_forget",
         )}
         expected.update({"helpers/drivers/spacetimedb.py", "helpers/explorer/spacetimedb.py",
-                         "docs/spacetimedb.md", "tests/fixtures/spacetimedb/src/index.ts"})
+                         "docs/spacetimedb.md", "tests/fixtures/spacetimedb/src/index.ts",
+                         "helpers/drivers/spacetimedb_memory.py", "helpers/spacetime_memory_setup.py",
+                         "memory_modules/spacetimedb/module.js", "memory_modules/spacetimedb/module.manifest.json",
+                         "memory_modules/spacetimedb/src/index.ts", "memory_modules/spacetimedb/NOTICE.md"})
         with tempfile.TemporaryDirectory() as path:
             output = Path(path) / "db-hub.zip"
             receipt = build(root, output)

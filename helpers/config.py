@@ -183,7 +183,11 @@ def normalize_config(data: dict, strict: bool) -> dict:
                 raise ValueError(f"Memory connection '{entry['id']}' is disabled.")
             if entry["driver"] not in MEMORY_DRIVERS:
                 raise ValueError(f"Connection '{entry['id']}' supports database tools but not automatic memory. "
-                                 "Choose Postgres/Neon, Qdrant, LanceDB, or ChromaDB.")
+                                 "Choose Postgres/Neon/Supabase, Qdrant, LanceDB, ChromaDB, or prepared SpacetimeDB memory.")
+            if entry['driver'] == 'spacetimedb' and not entry['options'].get('memory_database'):
+                raise ValueError(f"Prepare a dedicated SpacetimeDB memory database for '{entry['id']}' before enabling memory.")
+            if entry['driver'] == 'spacetimedb' and not entry['options'].get('auth_token'):
+                raise ValueError(f"SpacetimeDB memory connection '{entry['id']}' needs a stable Bearer token from Agent Zero Secrets.")
             readonly = entry["readonly"]
             if readonly is None:
                 readonly = data.get("readonly_default", True)

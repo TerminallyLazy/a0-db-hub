@@ -21,7 +21,7 @@ Keep the built-in **Memory** plugin enabled: it supplies recall settings, prompt
 
 ## Install and connect
 
-SpacetimeDB support is included in the 1.1.0 source. The older v1.0.0 release ZIP predates this adapter. See the [SpacetimeDB setup guide](docs/spacetimedb.md) for server URLs, published modules, tokens and reducer calls.
+SpacetimeDB query/reducer support starts at 1.1.0; **1.2.0 adds full Agent Zero memory support** and its private storage setup. See the [SpacetimeDB setup guide](docs/spacetimedb.md) for connection and memory preparation. Older release ZIPs do not include these additions.
 
 1. Open **Plugins → Install** and use the repository URL `https://github.com/TerminallyLazy/a0-db-hub`, or upload `db-hub-1.0.0.zip` from the [v1.0.0 release](https://github.com/TerminallyLazy/a0-db-hub/releases/tag/v1.0.0). Then enable **Database Hub**. Its install hook prepares the common PostgreSQL, Qdrant, and Neo4j clients in the plugin's private dependency directory, using the framework Python runtime.
 2. Open **Config**. Select the intended project/profile scope before editing.
@@ -50,9 +50,9 @@ Support varies by driver. See the [provider support matrix](docs/support.md), in
 
 ## Agent memory
 
-Enable **Use database for memory**, select one or more writable supported connections, and **Save**. PostgreSQL/Neon/Supabase with pgvector, Qdrant, LanceDB, and ChromaDB implement automatic memory storage.
+Enable **Use database for memory**, select one or more writable supported connections, and **Save**. PostgreSQL/Neon/Supabase with pgvector, Qdrant, LanceDB, ChromaDB, and prepared SpacetimeDB implement automatic memory storage. The toggle is a draft until Save; leaving settings first discards the change.
 
-Save prepares and validates three areas inside each selected database: `{prefix}_main`, `{prefix}_fragments`, and `{prefix}_solutions`. It creates tables/collections, not a provider account, server, project, or new database. PostgreSQL needs permission to use pgvector and create the required tables. A failed setup does not save the configuration, although empty structures already created are retained.
+Save prepares and validates three areas inside each selected memory database: `{prefix}_main`, `{prefix}_fragments`, and `{prefix}_solutions`. PostgreSQL needs permission to use pgvector and create the required tables. SpacetimeDB first requires a stable Secret-backed token and **Agent memory storage → Review new storage → Create private database**, or an existing database with the shipped memory module. This creates a separate database on the same server and can consume provider quota; the application module is preserved. Test, select the connection, then Save. A failed setup does not save the configuration, although storage already created is retained.
 
 - Writes replicate to every selected destination with a shared memory ID; reads merge and deduplicate results.
 - Store failures are reported. DB Hub does not silently fall back to FAISS.

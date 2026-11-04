@@ -4,7 +4,7 @@ DB Hub connects to an existing published SpacetimeDB database through its [HTTP 
 
 ## Connect
 
-1. Publish your application module using the [SpacetimeDB CLI](https://spacetimedb.com/docs/cli-reference/). DB Hub does not create a server, database or module.
+1. Publish your application module using the [SpacetimeDB CLI](https://spacetimedb.com/docs/cli-reference/). DB Hub connects to that existing application; the optional memory setup below creates a separate database.
 2. In DB Hub's catalog, search **SpacetimeDB** and add a connection draft.
 3. Set the connection URL to the server origin, such as `https://maincloud.spacetimedb.com` or `http://localhost:3000`. Do not append `/v1/database/...` or credentials. When Agent Zero runs in Docker and the server runs on its host, use `http://host.docker.internal:3000` where supported; Linux hosts may require a host-gateway mapping or an accessible server address.
 4. Enter the published database **name or identity**. Advanced configuration stores this as `options.database`.
@@ -56,7 +56,40 @@ Reducers return no rows. Read the affected table afterward to inspect the result
 
 Inspect argument types with `db_schema`. Values use [SATS-JSON](https://spacetimedb.com/docs/sats-json/) shapes. DB Hub accepts decimal strings for 64-bit and 128-bit integer argument fields, including those nested in structs, arrays or sums, and encodes them as exact numeric JSON using the current reducer schema. Numeric text fields remain strings. SQL integers outside JavaScript's safe range are returned as decimal strings to preserve their value in the workspace.
 
-SpacetimeDB is available for ordinary database work. It is not an automatic-memory destination. Live WebSocket subscriptions, procedures, module publishing and account discovery are outside this adapter's scope. An independently configured SpacetimeDB MCP server can coexist with DB Hub.
+Live WebSocket subscriptions, arbitrary procedure calls, application-module publishing and account discovery are outside the query adapter's scope. An independently configured SpacetimeDB MCP server can coexist with DB Hub.
+
+## Agent Zero memory (1.2.0)
+
+SpacetimeDB supports all four memory tools, automatic recall, background fragment/solution learning, replication to other supported memory stores, and explicit FAISS migration. Keep Agent Zero's built-in Memory plugin enabled for prompts and recall/learning settings. Its dashboard still describes built-in storage; browse external data in DB Hub.
+
+1. Configure a stable Bearer token through Agent Zero Secrets and choose **Read & write**. Anonymous HTTP requests cannot retain caller-owned memory across requests.
+2. Expand **Agent memory storage** on the SpacetimeDB connection. **Review new storage**, review the server and storage/quota notice, then **Create private database**. DB Hub uploads the bundled private module to a **new database identity**, using POST creation only. It never republishes or overwrites the application database.
+3. Alternatively, publish `memory_modules/spacetimedb/module.js` to a dedicated database using the CLI, then enter its name/identity in **Memory database**. Use the same server as the application connection.
+4. **Test** the connection. With a memory database configured, Test also validates its memory protocol. Then enable **Use database for memory**, select this connection, and **Save**. Save validates the embedding dimension and prepares all three scoped memory areas before persisting the setting.
+5. Reopen settings to see the saved toggle. **Memory storage & verification** runs a synthetic write/recall/delete check against saved settings.
+
+The toggle and memory database field are drafts until Save. Creation alone does not activate memory. Completed creation receipts survive closing the page: Review again recovers the existing identity, and **Attach** restores it to the draft. Receipts live in `.memory-setups/` and contain identities/hashes, never tokens. If a network interruption leaves creation's outcome unknown, DB Hub holds further creation for that connection. Inspect the provider's database list; attach the created identity, or remove the matching local receipt only after confirming nothing was created. This avoids automatic duplicate provisioning. Do not republish a memory database to recover a connection.
+
+The module uses private tables and authenticated procedures scoped by `ctx.sender`; other identities cannot read or delete that caller's memory. Database owners/administrators retain their normal privileged access. Retain the same identity when refreshing a token: changing identity selects a separate memory namespace. Agent Zero's project/custom memory-directory isolation adds its existing scoped prefix inside that identity.
+
+Search uses exact cosine similarity in the private module. Each collection scan is capped at **10,000 records** by default; `options.memory_max_scan` accepts 1–50,000. Exceeding the cap fails explicitly without returning partial recall or committing partial filtered deletion. Large embedding dimensions/collections can also hit server execution limits; use a native vector store for larger workloads. Memory browsing supports bounded offset paging; application table samples still do not. Upserts are atomic batches of 1–100; deletion accepts up to 1,000 IDs or a flat scalar-equality filter. Agent Zero's richer memory filters are applied by its existing memory pipeline.
+
+Changing embedding dimensions requires a new memory prefix. Switching database memory off and saving restores built-in storage while retaining external records. Uninstall does not delete the separate memory database; remove it through your provider/CLI when no longer needed.
+
+### Module ownership and rebuild
+
+`memory_modules/spacetimedb/src/index.ts` owns protocol version 1: caller-owned collections, private vectors/payloads, atomic writes, cosine search, deletion and paging. `helpers/drivers/spacetimedb_memory.py` implements that protocol; `helpers/spacetime_memory_setup.py` owns reviewed creation and recovery. Memory calls always request durability confirmation. Uncertain writes are never automatically replayed.
+
+The installable ZIP includes the bundled module and a SHA-256 manifest covering the bundle and its TypeScript/package/compiler inputs, plus third-party notices. Agent Zero needs no Node or SpacetimeDB dependency to use it. Maintainers rebuild with CLI/SDK **2.14.0** and TypeScript **7.0.2**:
+
+```sh
+cd memory_modules/spacetimedb
+npm install
+cd ../..
+python scripts/build_spacetime_memory.py
+```
+
+The builder checks the SDK version, typechecks through `spacetime build`, normalizes build-path comments, and updates the manifest. Review source and bundle together. Provisioning refuses stale source or a checksum mismatch. Module updates to an existing memory database remain an explicit owner-managed deployment.
 
 ## Reproduce the local acceptance check
 
@@ -80,3 +113,5 @@ node --test usr/plugins/db_hub/tests/*.test.mjs
 ```
 
 If the framework is in Docker and SpacetimeDB is on its host, set the test URL to `http://host.docker.internal:43127` instead. The live test creates fresh server identities and a temporary Agent Zero project, saves Secret-backed scoped connections through the real configuration hook, resolves tools with `Agent.get_tool`, runs their execution/history hooks, and verifies SQL/reducer readback. It checks sender authorization, private access, read-only enforcement, rollback, wide integers and the workspace's confirmation gate. No model inference or Maincloud account is used. Stop the fixture server afterward; its data is in memory.
+
+For memory acceptance, also provide `DB_HUB_MEMORY_LIVE_URL` (the same disposable SpacetimeDB server) and `DB_HUB_MEMORY_PG_DSN` (a disposable PostgreSQL database with pgvector), and run `tests/test_memory_live.py` with all four existing memory clients installed. It provisions fresh private SpacetimeDB memory databases and temporary local Qdrant/LanceDB/ChromaDB stores, exercises real Agent Zero settings and memory tools/hooks, and checks persistence, scope separation, threshold filtering, deletion, forgetting and disabling. PostgreSQL tables and SpacetimeDB databases remain in the disposable servers until those servers are removed. Never point these acceptance tests at user data.

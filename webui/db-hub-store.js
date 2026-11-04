@@ -201,6 +201,7 @@ export const store = createStore("dbHub", {
   init(config) {
     if (!config) return;
     this._config = config;
+    this._memorySetups = {};
     this.memoryCompatibility = { compatible: false, message: "Checking Agent Zero memory compatibility…" };
     this.setupKey = ''; this.catalogSearch = ''; this.catalogCategory = 'All'; this.showAllCatalog = false;
     if (!Array.isArray(config.connections)) config.connections = [];
@@ -225,6 +226,7 @@ export const store = createStore("dbHub", {
   cleanup() {
     this.testing = null;
     this._config = null;
+    this._memorySetups = {};
   },
 
   async refreshDrivers() {
@@ -343,6 +345,8 @@ export const store = createStore("dbHub", {
 
   connEdited(conn) {
     if (conn) conn.last_test = null;
+    const state = this._memorySetups?.[conn?.id];
+    if (state) { state.review = null; state.recovery = ''; }
   },
 
   needsInstall() {
@@ -401,7 +405,65 @@ export const store = createStore("dbHub", {
 
   memoryConnections(config) {
     return (config.connections || []).filter((conn) =>
-      conn.enabled !== false && this.drivers[conn.driver]?.memory_supported);
+      conn.enabled !== false && this.drivers[conn.driver]?.memory_supported &&
+      (conn.driver !== 'spacetimedb' || !!conn.options?.memory_database));
+  },
+
+  memoryToggleDisabled(config) {
+    return !config.memory_backend?.enabled && (!this.driversLoaded || !this.memoryCompatibility.compatible || !this.memoryConnections(config).length);
+  },
+
+  memoryAvailability(config) {
+    if (!this.driversLoaded || this.memoryConnections(config).length) return '';
+    if ((config.connections || []).some(c => c.enabled !== false && c.driver === 'spacetimedb')) {
+      return 'Prepare SpacetimeDB memory storage in the connection above, then select it here and click Save. Testing the application connection alone does not prepare memory.';
+    }
+    return 'Add an enabled Postgres/Neon/Supabase, Qdrant, LanceDB, ChromaDB, or prepared SpacetimeDB connection to use database memory.';
+  },
+
+  memorySetupFor(conn) {
+    this._memorySetups ||= {};
+    return this._memorySetups[conn.id] ||= { busy: false, review: null, recovery: '', fingerprint: '' };
+  },
+
+  async reviewSpacetimeMemory(config, idx) {
+    const conn = config.connections[idx], state = this.memorySetupFor(conn);
+    if (state.busy) return;
+    state.busy = true; state.review = null; state.recovery = '';
+    const fingerprint = JSON.stringify(conn);
+    try {
+      const result = await callApi({ action: 'review_spacetime_memory', connection: JSON.parse(fingerprint) });
+      if (JSON.stringify(conn) !== fingerprint || this._config !== config) return;
+      state.fingerprint = fingerprint;
+      if (result.recovery) state.recovery = result.recovery;
+      else state.review = result;
+    } catch (error) { toastFrontendError(error.message, 'SpacetimeDB memory'); }
+    finally { state.busy = false; }
+  },
+
+  attachSpacetimeMemory(config, idx) {
+    const conn = config.connections[idx], state = this.memorySetupFor(conn);
+    if (!state.recovery || JSON.stringify(conn) !== state.fingerprint) return;
+    conn.options.memory_database = state.recovery;
+    this.connEdited(conn);
+  },
+
+  async createSpacetimeMemory(config, idx) {
+    const conn = config.connections[idx], state = this.memorySetupFor(conn), review = state.review;
+    if (state.busy || !review?.token || JSON.stringify(conn) !== state.fingerprint) return;
+    const fingerprint = state.fingerprint;
+    state.busy = true; state.review = null;
+    try {
+      const result = await callApi({ action: 'create_spacetime_memory', connection: conn.id, token: review.token });
+      if (this._config !== config || JSON.stringify(conn) !== fingerprint) {
+        toastFrontendError(`Memory database ${result.memory_database} was created for the earlier draft. Restore that connection draft and Review to recover it, then Test and Save.`, 'SpacetimeDB memory');
+        return;
+      }
+      conn.options.memory_database = result.memory_database;
+      this.connEdited(conn);
+      (result.ready ? toastFrontendSuccess : toastFrontendError)(result.notice, 'SpacetimeDB memory');
+    } catch (error) { toastFrontendError(error.message, 'SpacetimeDB memory'); }
+    finally { state.busy = false; }
   },
 
   async verifyMemory() {
@@ -427,6 +489,7 @@ export const store = createStore("dbHub", {
     const mb = (config && config.memory_backend) || {};
     if (!mb.enabled) return "Using built-in memory settings.";
     if (!this.memoryCompatibility.compatible) return this.memoryCompatibility.message;
+    if (!this.memoryConnections(config).length) return this.memoryAvailability(config);
     const targets = this.memoryTargets(config).map((t) => t.connection).filter(Boolean);
     if (!targets.length) return "Select at least one connection to activate database memory.";
     const conns = (config && config.connections) || [];

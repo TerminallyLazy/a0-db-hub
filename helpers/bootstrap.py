@@ -23,6 +23,7 @@ import tempfile
 import threading
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
+from packaging.version import Version
 
 PLUGIN = "db_hub"
 
@@ -135,7 +136,13 @@ def pip_install(specs: list[str], timeout_s: int = 600) -> None:
         with tempfile.TemporaryDirectory(prefix=".deps-install-", dir=target.parent) as work:
             work = Path(work)
             constraints = work / "framework.txt"
-            constraints.write_text("".join(f"{name}=={version}\n" for name, version in sorted(shared.items())))
+            text = "".join(f"{name}=={version}\n" for name, version in sorted(shared.items()))
+            # Recent Arrow wheels require the NumPy 2 ABI without declaring a
+            # resolver-visible NumPy floor. Keep the tested compatible Arrow
+            # range when the framework still supplies NumPy 1.x.
+            if 'numpy' in shared and Version(shared['numpy']) < Version('2'):
+                text += 'pyarrow<24\n'
+            constraints.write_text(text)
             staged = work / "packages"
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "install", "--disable-pip-version-check",

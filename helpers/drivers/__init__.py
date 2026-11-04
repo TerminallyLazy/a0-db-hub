@@ -13,7 +13,7 @@ from usr.plugins.db_hub.helpers.base import DbHubError
 
 # These adapters implement the complete automatic-memory lifecycle, including
 # collection creation and deletion. Vector search alone is insufficient.
-MEMORY_DRIVERS = frozenset({"postgres", "qdrant", "lancedb", "chromadb"})
+MEMORY_DRIVERS = frozenset({"postgres", "qdrant", "lancedb", "chromadb", "spacetimedb"})
 
 DRIVERS: dict[str, dict] = {
     "postgres": {
@@ -78,11 +78,12 @@ DRIVERS: dict[str, dict] = {
     },
     "spacetimedb": {
         "title": "SpacetimeDB",
-        "description": "Published module schema, SQL and reducer calls over HTTP. No extra install.",
-        "capabilities": {"sql", "reducers"},
+        "description": "Published modules, SQL/reducers, and private memory in a dedicated DB Hub module. No extra install.",
+        "capabilities": {"sql", "reducers", "vector"},
         "import": "httpx",
         "pip": [],
         "dsn_example": "https://maincloud.spacetimedb.com",
+        "score": "cosine_similarity",
     },
     "sqlalchemy": {
         "title": "Generic SQL (SQLAlchemy)",

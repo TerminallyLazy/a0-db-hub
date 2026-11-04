@@ -14,6 +14,7 @@ args:
 
 notes:
 - Embedding needs a configured embedding model; otherwise pass explicit vectors.
+- SpacetimeDB vector operations use the separately prepared DB Hub memory database in `options.memory_database`, with a stable Secret-backed token. They do not operate on application tables. Use the Agent Zero memory tools for normal memory save/recall/deletion; storage preparation is done in connection settings.
 - Non-vector drivers answer with an error naming the right tool to use instead.
 - Confirm destructive deletes when accuracy matters.
 
