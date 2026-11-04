@@ -23,7 +23,7 @@ const LAZY_DRIVERS = new Set(["snowflake", "lancedb", "sqlalchemy", "redis",
 const CATALOG = [
   {
     key: "spacetimedb", name: "SpacetimeDB", driver: "spacetimedb",
-    logo: null, icon: "public",
+    logo: `${LOGO_BASE}/spacetimedb.svg`, icon: "public", dark: true,
     blurb: "Published module tables, SQL queries, and transactional reducer calls.",
     dsn: "https://maincloud.spacetimedb.com",
     options: { database: "" },

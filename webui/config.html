@@ -119,7 +119,7 @@
           <template x-for="(conn, idx) in config.connections" :key="idx">
             <details class="dbhub-conn" :id="'dbhub-conn-' + conn.id" :open="context.openIdx === idx" @toggle="context.openIdx = $event.target.open ? idx : (context.openIdx === idx ? null : context.openIdx)">
               <summary>
-                <span class="dbhub-conn-logo">
+                <span class="dbhub-conn-logo" :class="{dark: conn.driver === 'spacetimedb'}">
                   <template x-if="$store.dbHub.logoFor(conn)"><img :src="$store.dbHub.logoFor(conn)" alt="" loading="lazy" /></template>
                   <template x-if="!$store.dbHub.logoFor(conn)"><x-icon name="database"></x-icon></template>
                 </span>
@@ -294,7 +294,7 @@
                 <template x-for="conn in $store.dbHub.memoryConnections(config)" :key="conn.id">
                   <label class="dbhub-memconn">
                     <input type="checkbox" :checked="$store.dbHub.memoryHas(config, conn.id)" @change="$store.dbHub.toggleMemoryConn(config, conn.id)" />
-                    <span class="dbhub-conn-logo">
+                    <span class="dbhub-conn-logo" :class="{dark: conn.driver === 'spacetimedb'}">
                       <template x-if="$store.dbHub.logoFor(conn)"><img :src="$store.dbHub.logoFor(conn)" alt="" loading="lazy" /></template>
                       <template x-if="!$store.dbHub.logoFor(conn)"><x-icon name="database"></x-icon></template>
                     </span>
