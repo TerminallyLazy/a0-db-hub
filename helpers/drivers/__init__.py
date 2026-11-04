@@ -76,6 +76,14 @@ DRIVERS: dict[str, dict] = {
         "pip": [],
         "dsn_example": "https://polished-panda-123.convex.cloud",
     },
+    "spacetimedb": {
+        "title": "SpacetimeDB",
+        "description": "Published module schema, SQL and reducer calls over HTTP. No extra install.",
+        "capabilities": {"sql", "reducers"},
+        "import": "httpx",
+        "pip": [],
+        "dsn_example": "https://maincloud.spacetimedb.com",
+    },
     "sqlalchemy": {
         "title": "Generic SQL (SQLAlchemy)",
         "description": "Catch-all SQL access via a SQLAlchemy URL. Installs on first use.",

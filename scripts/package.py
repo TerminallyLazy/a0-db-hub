@@ -7,7 +7,7 @@ import zipfile
 
 ROOT_FILES = {"plugin.yaml", "default_config.yaml", "hooks.py", "README.md", "LICENSE", "thumbnail.jpg", ".gitignore"}
 SOURCE_DIRS = {"api", "extensions", "helpers", "prompts", "tools", "webui", "tests", "docs", "scripts"}
-EXTENSIONS = {".py", ".md", ".mjs", ".js", ".html", ".css", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".yaml", ".yml", ".json"}
+EXTENSIONS = {".py", ".md", ".mjs", ".js", ".ts", ".html", ".css", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".yaml", ".yml", ".json"}
 
 
 def source_files(root):

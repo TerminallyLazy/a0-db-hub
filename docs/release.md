@@ -8,6 +8,18 @@ The release baseline is upstream `main` / tag `v2.14`, commit `ff2a5b9c9c4e490ba
 
 Database Hub checks the core capability and actual selection of all four memory tools and all five memory hooks in the chosen scope. It refuses memory activation on incompatible cores or conflicting profile overrides. A distinct early hook also stops an already-enabled memory configuration before built-in storage can silently run. Database browsing is available without enabling database memory.
 
+## SpacetimeDB 1.1.0 source verification (2026-11-04)
+
+- Verified with a real local **SpacetimeDB 2.14.0** server and published TypeScript fixture, using the existing Agent Zero framework HTTP client. No production driver dependency was added.
+- Framework source was the exact Agent Zero v2.14 commit above, provisioned in a disposable container. The image's older baked-in source was replaced with that tracked source archive before acceptance. The active user container and its configuration were untouched.
+- The opt-in test created fresh SpacetimeDB identities and a temporary Agent Zero project, saved Secret-backed connections through real config hooks, and selected `db_status`, `db_schema` and `db_query` through `Agent.get_tool`. Tool execution and history hooks exercised real HTTP calls, SQL readback and reducer insert/update/delete.
+- Verified denied writes on saved read-only connections even with `readonly:false`, different-sender rejection, private-table denial, reducer transaction rollback, exact wide-integer arguments/results, bounded explorer samples and workspace write confirmation. Contract tests also cover transport errors, credential redaction and ambiguous framework timeouts without automatic retries.
+- **162 Python tests and 46 subtests passed** in the applicable DB Hub suite, including the live SpacetimeDB test. One existing local Qdrant test skipped itself. Six existing DuckDB/LanceDB/ChromaDB/Qdrant fixtures were excluded because their optional packages were absent; those providers were not re-certified by this change. All **18 upstream plugin-precedence tests** passed separately.
+- **18 JavaScript tests passed**, including SpacetimeDB catalog/setup, reducer selection, exact confirmation arguments and table-design boundaries. The fixture passed TypeScript checking with the existing 7.0.2 compiler.
+- A deterministic source ZIP and manifest include the driver, explorer, prompts, documentation and reproducible TypeScript fixture. Runtime dependencies, credentials, config and caches remain excluded.
+
+This verifies real local database operations through Agent Zero's tools and workspace services. It does not certify Maincloud credentials, browser-rendered UI, WebSocket subscriptions or model inference. The [setup guide](spacetimedb.md) includes reproduction steps; the older published v1.0.0 ZIP does not contain this adapter.
+
 ## v2.14 verification (2026-10-13)
 
 - **174 Python tests and 28 subtests passed**, covering every DB Hub test plus the upstream plugin-precedence cases. ChromaDB fixtures were included.

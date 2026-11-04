@@ -25,6 +25,8 @@ class DbHubSystemPrompt(Extension):
                 line += f": {entry['description']}"
             lines.append(line)
         lines.append("Unknown ids error back with this list; never invent ids.")
+        if any(e.get('driver') == 'spacetimedb' for e in connections):
+            lines.append('SpacetimeDB: inspect tables and reducer signatures with db_schema. Read via SELECT with WHERE/LIMIT; call reducers with db_query statement="CALL reducer_name", params={"args": [positional arguments]}. Calls require a writable connection and return no rows; read back the table. Do not retry ambiguous write failures. Table definitions belong in the published module; SQL bind parameters, ORDER BY and OFFSET are unavailable.')
         lines.append("For ordinary database work, inspect the schema first, choose the engine's native operations, and keep reads bounded. Saved read-only access cannot be overridden by tool arguments.")
         lines.append("For table or collection setup, propose types, keys, relationships and the exact commands, then obtain the user's approval before executing changes. Never replace an existing resource just to match a proposed schema.")
         backend = config.get('memory_backend', {})

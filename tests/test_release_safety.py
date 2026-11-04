@@ -71,6 +71,8 @@ class PackageTests(unittest.TestCase):
             "db_status", "db_schema", "db_query", "db_vector", "db_memory_migrate",
             "memory_save", "memory_load", "memory_delete", "memory_forget",
         )}
+        expected.update({"helpers/drivers/spacetimedb.py", "helpers/explorer/spacetimedb.py",
+                         "docs/spacetimedb.md", "tests/fixtures/spacetimedb/src/index.ts"})
         with tempfile.TemporaryDirectory() as path:
             output = Path(path) / "db-hub.zip"
             receipt = build(root, output)

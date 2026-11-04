@@ -57,3 +57,11 @@ test('agent prompts include scope and resource while preserving memory and saved
  const {store}=harness();store.connections=[{id:'pg',driver:'postgres',readonly:true,capabilities:['sql']}];store.connection='pg';store.project='project-a';store.profile='researcher';store.target='public.notes';store.agentTask='import';
  assert.match(store.agentPrompt,/project-a/);assert.match(store.agentPrompt,/public.notes/);assert.match(store.agentPrompt,/read-only permissions/);assert.match(store.agentPrompt,/do not change memory settings/);store.resetExplorer();assert.equal(store.tableReview,null);assert.equal(store.agentHelp,false);
 });
+
+test('SpacetimeDB reducers open a reviewed call and tables offer a bounded sample without DDL',async()=>{
+ const {store,calls}=harness();store.connections=[{id:'st',driver:'spacetimedb',capabilities:['sql','reducers']}];store.connection='st';store.family='spacetimedb';store.allowWrites=true;store.review={statement:'old'};
+ await store.chooseResource({name:'CALL add_record',parts:['add_record'],kind:'reducer'});
+ assert.equal(store.tab,'query');assert.equal(store.statement,'CALL add_record');assert.deepEqual(JSON.parse(store.params),{args:[]});assert.equal(store.allowWrites,false);assert.equal(store.review,null);assert.equal(store.supportsTables,false);assert.equal(calls.length,1);
+ store.params='{"args":["hello"]}';store.allowWrites=true;await store.runQuery();assert.equal(calls.length,1);await store.confirmQuery();assert.deepEqual(calls[1].params.args,['hello']);assert.equal(calls[1].confirmed,true);
+ await store.chooseResource({name:'record',parts:['record'],kind:'table'});assert.equal(store.params,'{}');assert.equal(store.statement,'SELECT * FROM "record" LIMIT 50');assert.equal(store.allowWrites,false);assert.match(store.queryHint,/CALL reducer_name/);
+});

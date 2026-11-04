@@ -94,8 +94,11 @@ async def execute(data, project='', profile=''):
                     identifier = '`' + '.'.join(parts) + '`'
                 else:
                     identifier = '.'.join('"'+p.replace('"','""')+'"' for p in parts)
-                result = await bound.query(f'SELECT * FROM {identifier} LIMIT {limit} OFFSET {offset}',readonly=True)
-                result['next_offset'] = offset + limit if len(result.get('rows',[])) == limit else None
+                if driver == 'spacetimedb' and offset:
+                    raise DbHubError('SpacetimeDB does not support OFFSET. Use WHERE and LIMIT in Query.')
+                paging = '' if driver == 'spacetimedb' else f' OFFSET {offset}'
+                result = await bound.query(f'SELECT * FROM {identifier} LIMIT {limit}' + paging,readonly=True)
+                result['next_offset'] = offset + limit if driver != 'spacetimedb' and len(result.get('rows',[])) == limit else None
             elif driver == 'mongodb':
                 result = await bound.query(target,{'op':'find','limit':limit,'skip':offset},readonly=True)
                 result['next_offset'] = offset + limit if len(result.get('rows',[])) == limit else None

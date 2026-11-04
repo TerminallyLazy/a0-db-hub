@@ -14,13 +14,20 @@ const LOGO_BASE = "/plugins/db_hub/webui/logos";
 // while the model still held the right value).
 const ALL_DRIVERS = ["bigquery", "chromadb", "convex", "duckdb", "fluree",
   "hydradb", "lancedb", "milvus", "mongodb", "neo4j", "pinecone", "postgres",
-  "qdrant", "redis", "snowflake", "sqlalchemy", "weaviate"];
+  "qdrant", "redis", "snowflake", "spacetimedb", "sqlalchemy", "weaviate"];
 
 // Drivers whose packages install lazily on first use (mirrors OPTIONAL_DEPS).
 const LAZY_DRIVERS = new Set(["snowflake", "lancedb", "sqlalchemy", "redis",
   "mongodb", "pinecone", "chromadb", "milvus", "duckdb", "bigquery", "weaviate"]);
 
 const CATALOG = [
+  {
+    key: "spacetimedb", name: "SpacetimeDB", driver: "spacetimedb",
+    logo: null, icon: "public",
+    blurb: "Published module tables, SQL queries, and transactional reducer calls.",
+    dsn: "https://maincloud.spacetimedb.com",
+    options: { database: "" },
+  },
   {
     key: "postgresql", name: "PostgreSQL", driver: "postgres",
     logo: `${LOGO_BASE}/postgres.svg`, icon: "database",
@@ -176,7 +183,7 @@ export const store = createStore("dbHub", {
   catalogSearch: '', catalogCategory: 'All', showAllCatalog: false, setupKey: '', setupMode: 'details',
   get setupProduct() { return this.catalog.find(p => p.key === this.setupKey); },
   catalogType(product) {
-    return ['postgres','sqlalchemy','duckdb','snowflake','bigquery'].includes(product.driver) ? 'SQL' : ['qdrant','lancedb','chromadb','pinecone','milvus','weaviate'].includes(product.driver) ? 'Vector' : ['neo4j','hydradb','fluree'].includes(product.driver) ? 'Graph' : 'Document & key-value';
+    return ['postgres','sqlalchemy','duckdb','snowflake','bigquery','spacetimedb'].includes(product.driver) ? 'SQL' : ['qdrant','lancedb','chromadb','pinecone','milvus','weaviate'].includes(product.driver) ? 'Vector' : ['neo4j','hydradb','fluree'].includes(product.driver) ? 'Graph' : 'Document & key-value';
   },
   get visibleCatalog() {
     const popular = ['neon','supabase','postgresql','qdrant','mongodb','redis','neo4j','lancedb'];
@@ -316,7 +323,7 @@ export const store = createStore("dbHub", {
       lancedb: "LanceDB", snowflake: "Snowflake", convex: "Convex", sqlalchemy: "SQL",
       redis: "Redis", mongodb: "MongoDB", pinecone: "Pinecone", chromadb: "ChromaDB",
       milvus: "Milvus", duckdb: "DuckDB", bigquery: "BigQuery", weaviate: "Weaviate",
-      fluree: "Fluree",
+      fluree: "Fluree", spacetimedb: "SpacetimeDB",
     };
     return names[driver] || String(driver || "?");
   },
@@ -437,7 +444,7 @@ export const store = createStore("dbHub", {
     for (let n = 2; taken.has(id); n += 1) id = `${product.key}_${n}`;
     config.connections.push({
       id, driver: product.driver, dsn: product.dsn,
-      enabled: true, readonly: null, options: {},
+      enabled: true, readonly: null, options: { ...(product.options || {}) },
     });
     const added = config.connections[config.connections.length - 1];
     added.driver = product.driver;
@@ -574,18 +581,20 @@ export const store = createStore("dbHub", {
   },
 
   needsApiKey(driver) {
-    return ["chromadb", "lancedb", "pinecone", "qdrant", "weaviate"]
+    return ["chromadb", "lancedb", "pinecone", "qdrant", "weaviate", "spacetimedb"]
       .includes(String(driver || ""));
   },
 
+  credentialSlot(conn) { return conn?.driver === "spacetimedb" ? "auth_token" : "api_key"; },
+
   rawOptionIn(conn) {
-    const value = conn && conn.options ? conn.options.api_key : "";
+    const value = conn && conn.options ? conn.options[this.credentialSlot(conn)] : "";
     return !!value && !String(value).includes("§§secret(");
   },
 
   async moveOptionSecret(config, idx) {
     const conn = config.connections[idx];
-    const raw = conn && conn.options ? String(conn.options.api_key || "") : "";
+    const raw = conn && conn.options ? String(conn.options[this.credentialSlot(conn)] || "") : "";
     if (!raw || raw.includes("§§secret(")) {
       toastFrontendError("Nothing to move — the key is already a placeholder.", "Database Hub");
       return;
@@ -597,7 +606,7 @@ export const store = createStore("dbHub", {
       const result = await callApi({
         action: "store_secret", dsn: "", key, password: raw, conn_id: conn.id || "",
       });
-      conn.options.api_key = `§§secret(${result.key})`;
+      conn.options[this.credentialSlot(conn)] = `§§secret(${result.key})`;
       delete keys[idx];
       this.connEdited(conn);
       toastFrontendSuccess(

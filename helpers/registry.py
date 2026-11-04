@@ -169,9 +169,15 @@ class BoundConnection:
                 "write statements are refused."
             )
         await self._touch()
-        result = await asyncio.wait_for(
-            self.driver.query(statement, params, ro), timeout=self._timeout()
-        )
+        try:
+            result = await asyncio.wait_for(
+                self.driver.query(statement, params, ro), timeout=self._timeout()
+            )
+        except asyncio.TimeoutError:
+            raise DbHubError(
+                "Database query timed out. A submitted write may have committed; "
+                "read back before retrying."
+            ) from None
         rows = result.get("rows", [])
         if isinstance(rows, list):
             rows, truncated = truncate_rows(rows, int(self.glob.get("max_rows", 200)))

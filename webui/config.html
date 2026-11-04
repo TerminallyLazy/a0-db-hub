@@ -163,12 +163,18 @@
                     <div class="dbhub-warn-hint">Stores the password as the key above, then swaps this field to a <code>§§secret(KEY)</code> placeholder. Test and Save after.</div>
                   </div>
                 </template>
+                <template x-if="conn.driver === 'spacetimedb'">
+                  <label class="field"><span class="field-title">Published database name or identity</span>
+                    <input aria-label="SpacetimeDB database" x-model="conn.options.database" @change="$store.dbHub.connEdited(conn)" placeholder="my-database" spellcheck="false" />
+                    <span class="field-description">Use the server URL above. Tables and reducers come from the published module. For a host server reached from Docker, use host.docker.internal instead of localhost.</span>
+                  </label>
+                </template>
                 <template x-if="$store.dbHub.showApiKey(conn)">
                 <div class="field">
-                  <div class="field-label"><div class="field-title">API key</div><div class="field-description">If required by your service, store the key as §§secret(KEY).</div></div>
+                  <div class="field-label"><div class="field-title" x-text="conn.driver === 'spacetimedb' ? 'Bearer token (optional)' : 'API key'"></div><div class="field-description" x-text="conn.driver === 'spacetimedb' ? 'Use an identity token stored as §§secret(KEY). Without a token each request uses a new anonymous identity with public access.' : 'If required by your service, store the key as §§secret(KEY).'"></div></div>
                   <div class="field-control">
                     <div class="dbhub-dsn-row">
-                      <input aria-label="Database API key" :type="context.revealKeyIdx === idx ? 'text' : 'password'" x-model="conn.options.api_key" placeholder="§§secret(KEY)" spellcheck="false" autocomplete="new-password" />
+                      <input :aria-label="conn.driver === 'spacetimedb' ? 'SpacetimeDB Bearer token' : 'Database API key'" :type="context.revealKeyIdx === idx ? 'text' : 'password'" x-model="conn.options[$store.dbHub.credentialSlot(conn)]" @change="$store.dbHub.connEdited(conn)" placeholder="§§secret(KEY)" spellcheck="false" autocomplete="new-password" />
                       <button type="button" class="btn" @click="context.revealKeyIdx = context.revealKeyIdx === idx ? null : idx" :title="context.revealKeyIdx === idx ? 'Mask key' : 'Reveal key'">
                         <span x-text="context.revealKeyIdx === idx ? 'Hide' : 'Show'"></span>
                       </button>

@@ -1,0 +1,7 @@
+{
+  "name": "db-hub-spacetimedb-fixture",
+  "private": true,
+  "type": "module",
+  "dependencies": { "spacetimedb": "2.14.0" },
+  "devDependencies": { "typescript": "7.0.2" }
+}
