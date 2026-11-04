@@ -1,12 +1,16 @@
 # Release verification
 
-Database Hub **1.2.0** source/ZIP verified against Agent Zero **v2.14** on 2026-11-04. See [a0-db-hub](https://github.com/TerminallyLazy/a0-db-hub) for source and published releases. The older v1.0.0 release ZIP predates SpacetimeDB. Plugin Index refresh, pull-request merge and release publication are separate steps.
+Database Hub **1.2.1** includes the settings interaction fix below; the 1.2.0 source/ZIP passed full backend acceptance against Agent Zero **v2.14** on 2026-11-04. See [a0-db-hub](https://github.com/TerminallyLazy/a0-db-hub) for source and published releases. The older v1.0.0 release ZIP predates SpacetimeDB. Plugin Index refresh, pull-request merge and release publication are separate steps.
 
 ## Required Agent Zero core
 
 The release baseline is upstream `main` / tag `v2.14`, commit `ff2a5b9c9c4e490ba38dd7c313e779510bb2071a`, with the framework Python 3.12 runtime. It includes [Agent Zero PR #1943](https://github.com/agent0ai/agent-zero/pull/1943) and the follow-up provider/profile precedence fix. No manual core patch is needed. The capability check remains authoritative if other plugins or profiles override memory behavior.
 
 Database Hub checks the core capability and actual selection of all four memory tools and all five memory hooks in the chosen scope. It refuses memory activation on incompatible cores or conflicting profile overrides. A distinct early hook also stops an already-enabled memory configuration before built-in storage can silently run. Database browsing is available without enabling database memory.
+
+## Memory toggle 1.2.1 verification (2026-11-04)
+
+The memory switch now accepts a SpacetimeDB connection that still needs storage. Turning it on selects a sole destination in the draft and opens its memory setup. Explicit setup shortcuts support multiple connections. It performs no network writes or automatic provisioning. Core compatibility checks and backend Save validation still guard activation. All **28 JavaScript tests pass**, covering the single-connection on/off path, multiple connections, existing ready destinations and stale-page behavior. This patch changes settings interaction only; backend acceptance below remains the 1.2.0 baseline. Browser rendering was not re-certified.
 
 ## Memory support 1.2.0 verification (2026-11-04)
 

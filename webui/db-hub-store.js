@@ -410,13 +410,48 @@ export const store = createStore("dbHub", {
   },
 
   memoryToggleDisabled(config) {
-    return !config.memory_backend?.enabled && (!this.driversLoaded || !this.memoryCompatibility.compatible || !this.memoryConnections(config).length);
+    return !config.memory_backend?.enabled && (!this.driversLoaded || !this.memoryCompatibility.compatible ||
+      (!this.memoryConnections(config).length && !this.memorySetupConnections(config).length));
+  },
+
+  memorySetupConnections(config) {
+    return (config.connections || []).filter(conn => conn.enabled !== false && conn.driver === 'spacetimedb' &&
+      this.drivers[conn.driver]?.memory_supported && !conn.options?.memory_database);
+  },
+
+  memoryToggleChanged(config, context, enabled) {
+    if (enabled && this.memoryToggleDisabled(config)) return;
+    this.memoryTargets(config);
+    config.memory_backend.enabled = enabled;
+    if (!enabled) return;
+    const candidates = [...this.memoryConnections(config), ...this.memorySetupConnections(config)];
+    if (!this.memoryTargets(config).length && candidates.length === 1) {
+      this.memoryTargets(config).push({ connection: candidates[0].id });
+    }
+    const pending = this.memorySetupConnections(config).filter(conn => this.memoryHas(config, conn.id));
+    if (pending.length === 1) return this.openSpacetimeMemorySetup(config, pending[0], context);
+  },
+
+  openSpacetimeMemorySetup(config, conn, context) {
+    const idx = config.connections.indexOf(conn);
+    if (this._config !== config || idx < 0 || conn.driver !== 'spacetimedb' || conn.enabled === false) return;
+    if (context) context.openIdx = idx;
+    return globalThis.Alpine.nextTick(() => {
+      if (this._config !== config || !config.connections.includes(conn) || conn.enabled === false) return;
+      const card = document.getElementById('dbhub-conn-' + conn.id);
+      const panel = card?.querySelector('[data-spacetime-memory-setup]');
+      if (!panel) return;
+      card.open = true;
+      panel.open = true;
+      panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      panel.querySelector('input')?.focus({ preventScroll: true });
+    });
   },
 
   memoryAvailability(config) {
     if (!this.driversLoaded || this.memoryConnections(config).length) return '';
     if ((config.connections || []).some(c => c.enabled !== false && c.driver === 'spacetimedb')) {
-      return 'Prepare SpacetimeDB memory storage in the connection above, then select it here and click Save. Testing the application connection alone does not prepare memory.';
+      return 'SpacetimeDB needs memory storage before you can Save. Turn on database memory to open setup, or use Set up memory below. Testing the application connection alone does not prepare memory.';
     }
     return 'Add an enabled Postgres/Neon/Supabase, Qdrant, LanceDB, ChromaDB, or prepared SpacetimeDB connection to use database memory.';
   },
