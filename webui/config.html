@@ -170,7 +170,7 @@
                   </label>
                 </template>
                 <template x-if="conn.driver === 'spacetimedb'">
-                  <details class="dbhub-advanced">
+                  <details class="dbhub-advanced" data-spacetime-memory-setup>
                     <summary>Agent memory storage</summary>
                     <p class="field-description">Memory uses a dedicated private database on this SpacetimeDB server. Creating it can use provider storage or quota. Your application module is kept separate.</p>
                     <label class="dbhub-cred-field"><span>Memory database name or identity</span>
@@ -309,10 +309,13 @@
               <div class="field-title">Use database for memory</div>
                   <div class="field-description">Save automatically prepares memory tables or collections in the selected databases for memory, recall, and background learning. Turning this off restores built-in storage.</div>
             </div>
-            <label class="toggle"><input type="checkbox" aria-label="Use database for memory" x-model="config.memory_backend.enabled" :disabled="$store.dbHub.memoryToggleDisabled(config)" aria-describedby="dbhub-memory-compatibility dbhub-memory-availability dbhub-memory-save" /><span class="toggler"></span></label>
+            <label class="toggle"><input type="checkbox" aria-label="Use database for memory" :checked="config.memory_backend.enabled" @change="$store.dbHub.memoryToggleChanged(config, context, $event.target.checked)" :disabled="$store.dbHub.memoryToggleDisabled(config)" aria-describedby="dbhub-memory-compatibility dbhub-memory-availability dbhub-memory-save" /><span class="toggler"></span></label>
           </div>
           <p id="dbhub-memory-compatibility" class="field-description" x-show="!$store.dbHub.memoryCompatibility.compatible" x-text="$store.dbHub.memoryCompatibility.message"></p>
           <p id="dbhub-memory-availability" class="field-description" x-show="$store.dbHub.memoryAvailability(config)" x-text="$store.dbHub.memoryAvailability(config)"></p>
+          <template x-for="conn in $store.dbHub.memorySetupConnections(config)" :key="conn.id">
+            <button type="button" class="btn" @click="$store.dbHub.openSpacetimeMemorySetup(config, conn, context)">Set up memory for <span x-text="conn.id"></span></button>
+          </template>
           <p id="dbhub-memory-save" class="field-description">Select supported memory connections and click Save at the bottom. Leaving without saving discards the toggle change.</p>
           <div class="field" x-show="config.memory_backend.enabled">
             <div class="field-label"><div class="field-title">Memory connections</div><div class="field-description">Choose one or more writable connections. Other databases remain available in the workspace.</div></div>

@@ -50,7 +50,7 @@ Support varies by driver. See the [provider support matrix](docs/support.md), in
 
 ## Agent memory
 
-Enable **Use database for memory**, select one or more writable supported connections, and **Save**. PostgreSQL/Neon/Supabase with pgvector, Qdrant, LanceDB, ChromaDB, and prepared SpacetimeDB implement automatic memory storage. The toggle is a draft until Save; leaving settings first discards the change.
+Enable **Use database for memory**, select one or more writable supported connections, and **Save**. PostgreSQL/Neon/Supabase with pgvector, Qdrant, LanceDB, ChromaDB, and prepared SpacetimeDB implement automatic memory storage. With a single SpacetimeDB connection awaiting storage, turning on the switch opens its memory setup and selects it in the draft. **Set up memory** also opens that setup directly. Finish preparation, Test, then Save to activate memory. The toggle is a draft until Save; leaving settings first discards the change.
 
 Save prepares and validates three areas inside each selected memory database: `{prefix}_main`, `{prefix}_fragments`, and `{prefix}_solutions`. PostgreSQL needs permission to use pgvector and create the required tables. SpacetimeDB first requires a stable Secret-backed token and **Agent memory storage → Review new storage → Create private database**, or an existing database with the shipped memory module. This creates a separate database on the same server and can consume provider quota; the application module is preserved. Test, select the connection, then Save. A failed setup does not save the configuration, although storage already created is retained.
 
