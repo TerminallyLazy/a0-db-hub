@@ -9,6 +9,8 @@ LABELS = {'auto_id': 'Automatic ID', 'integer': 'Whole number', 'text': 'Text', 
 
 async def options(bound):
     kind = bound.conn_cfg['driver']; d = bound.driver
+    if kind == 'spacetimedb':
+        return {'supported': False, 'note': 'SpacetimeDB tables are defined in a Rust, TypeScript, C# or C++ module and published with the spacetime CLI. Use Agent help to design the module; CREATE TABLE is unavailable.'}
     if kind not in KINDS:
         return {'supported': False, 'note': 'This engine uses collections, keys, graphs or functions. Agent help provides a native setup prompt.'}
     if kind == 'postgres':

@@ -1185,7 +1185,7 @@ class DriverRegistryTests(unittest.TestCase):
             driver_registry.driver_names(),
             ["bigquery", "chromadb", "convex", "duckdb", "fluree", "hydradb", "lancedb",
              "milvus", "mongodb", "neo4j", "pinecone", "postgres", "qdrant",
-             "redis", "snowflake", "sqlalchemy", "weaviate"],
+             "redis", "snowflake", "spacetimedb", "sqlalchemy", "weaviate"],
         )
 
     def test_unknown_driver_error_lists_valid(self):

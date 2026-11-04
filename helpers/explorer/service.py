@@ -12,12 +12,15 @@ from .postgres import Postgres
 from .relational import SQLAlchemy, Warehouse
 from .vectors import Vectors
 from .native import Mongo, Redis, Graph, Functions
+from .spacetimedb import SpacetimeDB
 
 _REVIEWS = {}
 _REVIEW_LOCK = threading.Lock()
 
 def adapter(bound):
     kind=bound.conn_cfg['driver']
+    if kind == 'spacetimedb':
+        return SpacetimeDB(bound)
     cls=Postgres if kind=='postgres' else SQLAlchemy if kind=='sqlalchemy' else Warehouse if kind in ('duckdb','snowflake','bigquery') else Mongo if kind=='mongodb' else Redis if kind=='redis' else Graph if kind in ('neo4j','hydradb') else Functions if kind in ('convex','fluree') else Vectors
     return cls(bound)
 

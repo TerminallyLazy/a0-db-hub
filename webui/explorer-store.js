@@ -4,7 +4,7 @@ import { toastFrontendError } from '/components/notifications/notification-store
 export const explorerMethods = {
   tableDesigner: false, tableOptions: null, tableDefinition: null, tableReview: null,
   agentHelp: false, agentTask: 'design', agentGoal: '', promptCopied: false,
-  get supportsTables() { return this.selected?.capabilities?.includes('sql'); },
+  get supportsTables() { return this.selected?.driver !== 'spacetimedb' && this.selected?.capabilities?.includes('sql'); },
   async openTableDesigner() {
     this.tableDesigner = true; this.agentHelp = false; this.tableReview = null; this.tableOptions = null;
     await this.task(async current => {
@@ -87,8 +87,13 @@ export const explorerMethods = {
   },
   async chooseResource(resource, view = 'data') {
     if (!resource) return; this.generation++; this.target = resource.name; this.metadata = null; this.dataResult = null; this.inspector = null; this.mutationReview = null; this.editOperation = ''; this.hiddenColumns = [];
-    this.pages = []; this.pagePosition = { offset: 0, cursor: null }; this.filterColumn = ''; this.sortColumn = ''; this.nativeFilter = '{}'; this.tab = this.family === 'function' ? 'query' : view;
+    this.pages = []; this.pagePosition = { offset: 0, cursor: null }; this.filterColumn = ''; this.sortColumn = ''; this.nativeFilter = '{}'; this.tab = this.family === 'function' || resource.kind === 'reducer' ? 'query' : view;
     if (this.family === 'function') this.statement = resource.name;
+    if (resource.kind === 'reducer') { this.statement = resource.name; this.params = '{"args": []}'; }
+    if (this.family === 'spacetimedb') {
+      this.review = null; this.allowWrites = false;
+      if (resource.kind === 'table') { this.statement = 'SELECT * FROM "' + resource.parts[0].replaceAll('"', '""') + '" LIMIT 50'; this.params = '{}'; }
+    }
     await this.task(async current => { const meta = await this.explorer({ action: 'metadata' }); if (current()) this.metadata = meta; });
     if (this.tab === 'data' && this.metadata) await this.loadPage();
   },

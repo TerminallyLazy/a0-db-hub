@@ -21,6 +21,8 @@ Keep the built-in **Memory** plugin enabled: it supplies recall settings, prompt
 
 ## Install and connect
 
+SpacetimeDB support is included in the 1.1.0 source. The older v1.0.0 release ZIP predates this adapter. See the [SpacetimeDB setup guide](docs/spacetimedb.md) for server URLs, published modules, tokens and reducer calls.
+
 1. Open **Plugins → Install** and use the repository URL `https://github.com/TerminallyLazy/a0-db-hub`, or upload `db-hub-1.0.0.zip` from the [v1.0.0 release](https://github.com/TerminallyLazy/a0-db-hub/releases/tag/v1.0.0). Then enable **Database Hub**. Its install hook prepares the common PostgreSQL, Qdrant, and Neo4j clients in the plugin's private dependency directory, using the framework Python runtime.
 2. Open **Config**. Select the intended project/profile scope before editing.
 3. Choose a database in **Add a database**. Neon and Supabase offer management-token project discovery and a provider-console fallback. Qdrant offers guided endpoint/API-key setup. A registered OAuth app is optional; no app credentials are included.
