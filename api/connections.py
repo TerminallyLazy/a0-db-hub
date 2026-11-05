@@ -1,4 +1,4 @@
-"""db_hub settings API: list | save | delete | test | drivers.
+"""db_hub settings API: connections, dependencies and SpacetimeDB setup.
 
 Never returns resolved DSNs — only previews with `§§secret(KEY)` placeholders
 left literal and raw passwords masked. `test` resolves secrets server-side.
@@ -51,6 +51,9 @@ class Connections(ApiHandler):
         project_name = str(input.get("project_name", "") or "")
         agent_profile = str(input.get("agent_profile", "") or "")
         try:
+            if action == 'create_spacetime_identity':
+                from usr.plugins.db_hub.helpers.spacetime_identity import create_identity
+                return await create_identity(input.get('connection'), project_name, agent_profile)
             if action in {'review_spacetime_memory', 'create_spacetime_memory'}:
                 from flask import session
                 import secrets
@@ -225,7 +228,7 @@ class Connections(ApiHandler):
                 return {"ok": True}
             return {"ok": False,
                     "error": f"Unknown action '{action}'. "
-                    "Use list, save, delete, test, install, extract_secret, store_secret, normalize, stamp, or drivers."}
+                    "Use list, save, delete, test, install, extract_secret, store_secret, normalize, stamp, drivers, create_spacetime_identity, review_spacetime_memory, or create_spacetime_memory."}
         except DbHubError as exc:
             return {"ok": False, "error": str(exc)}
         except Exception as exc:

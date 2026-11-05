@@ -66,6 +66,20 @@ def encode_arg(value, typ, types, depth=0):
     return value
 
 
+def server_origin(dsn):
+    origin = (dsn or '').strip().rstrip('/')
+    try:
+        url = urlsplit(origin)
+        valid = (url.scheme in {'http', 'https'} and url.hostname and url.port != 0
+                 and not url.username and not url.password and not url.query
+                 and not url.fragment and not url.path)
+    except ValueError:
+        valid = False
+    if not valid:
+        raise DbHubError('SpacetimeDB DSN must be a server origin such as https://maincloud.spacetimedb.com or http://localhost:3000. Put the database name in options.database.')
+    return origin
+
+
 class SpacetimeDBDriver(SpacetimeMemory, VectorDriver):
     capabilities = {"sql", "reducers", "vector"}
     required_config_keys = ("database",)
@@ -81,16 +95,7 @@ class SpacetimeDBDriver(SpacetimeMemory, VectorDriver):
 
         options = conn_cfg or {}
         self._options = dict(options)
-        origin = (resolved_dsn or "").strip().rstrip("/")
-        try:
-            url = urlsplit(origin)
-            valid = (url.scheme in {"http", "https"} and url.hostname and url.port != 0
-                     and not url.username and not url.password and not url.query
-                     and not url.fragment and not url.path)
-        except ValueError:
-            valid = False
-        if not valid:
-            raise DbHubError("SpacetimeDB DSN must be a server origin such as https://maincloud.spacetimedb.com or http://localhost:3000. Put the database name in options.database.")
+        origin = server_origin(resolved_dsn)
         database = options.get("database", "")
         if not isinstance(database, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,255}", database):
             raise DbHubError("SpacetimeDB needs options.database: a published database name or identity.")

@@ -202,6 +202,7 @@ export const store = createStore("dbHub", {
     if (!config) return;
     this._config = config;
     this._memorySetups = {};
+    this._spacetimeIdentities = {};
     this.memoryCompatibility = { compatible: false, message: "Checking Agent Zero memory compatibility…" };
     this.setupKey = ''; this.catalogSearch = ''; this.catalogCategory = 'All'; this.showAllCatalog = false;
     if (!Array.isArray(config.connections)) config.connections = [];
@@ -227,6 +228,7 @@ export const store = createStore("dbHub", {
     this.testing = null;
     this._config = null;
     this._memorySetups = {};
+    this._spacetimeIdentities = {};
   },
 
   async refreshDrivers() {
@@ -347,6 +349,8 @@ export const store = createStore("dbHub", {
     if (conn) conn.last_test = null;
     const state = this._memorySetups?.[conn?.id];
     if (state) { state.review = null; state.recovery = ''; }
+    const identity = this._spacetimeIdentities?.[conn?.id];
+    if (identity) { identity.identity = ''; identity.notice = ''; }
   },
 
   needsInstall() {
@@ -459,6 +463,31 @@ export const store = createStore("dbHub", {
   memorySetupFor(conn) {
     this._memorySetups ||= {};
     return this._memorySetups[conn.id] ||= { busy: false, review: null, recovery: '', fingerprint: '' };
+  },
+
+  spacetimeIdentityFor(conn) {
+    this._spacetimeIdentities ||= {};
+    return this._spacetimeIdentities[conn.id] ||= { busy: false, identity: '', notice: '' };
+  },
+
+  async createSpacetimeIdentity(config, idx) {
+    const conn = config.connections[idx], state = this.spacetimeIdentityFor(conn);
+    if (state.busy || conn.driver !== 'spacetimedb' || conn.options.auth_token || conn.options.memory_database) return;
+    const fingerprint = JSON.stringify(conn);
+    state.busy = true;
+    try {
+      const result = await callApi({ action: 'create_spacetime_identity', connection: JSON.parse(fingerprint) });
+      if (this._config !== config || this._spacetimeIdentities?.[conn.id] !== state || JSON.stringify(conn) !== fingerprint) {
+        toastFrontendError('The identity token was stored in Secrets for the earlier connection draft. Restore that draft and click Create identity again to recover it.', 'SpacetimeDB identity');
+        return;
+      }
+      conn.options.auth_token = result.auth_token;
+      this.connEdited(conn);
+      state.identity = result.identity;
+      state.notice = result.notice;
+      toastFrontendSuccess(result.notice, 'SpacetimeDB identity');
+    } catch (error) { toastFrontendError(error.message, 'SpacetimeDB identity'); }
+    finally { state.busy = false; }
   },
 
   async reviewSpacetimeMemory(config, idx) {

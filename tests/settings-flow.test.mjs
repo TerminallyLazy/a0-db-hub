@@ -100,3 +100,40 @@ test('creation finishing after a draft or page change cannot attach storage to t
   assert.equal(config.connections[0].options.memory_database,undefined);
  }
 });
+
+test('identity creation attaches only a secret reference and leaves activation and permissions explicit',async()=>{
+ const {store,calls}=harness(async()=>({ok:true,identity:'public-identity',auth_token:'§§secret(ST_NEW)',key:'ST_NEW',notice:'Stored'}));
+ const config={connections:[{id:'st',driver:'spacetimedb',readonly:true,options:{database:'app'}}],memory_backend:{enabled:false}};store._config=config;
+ await store.createSpacetimeIdentity(config,0);
+ assert.equal(config.connections[0].options.auth_token,'§§secret(ST_NEW)');assert.equal(config.connections[0].readonly,true);assert.equal(config.memory_backend.enabled,false);
+ assert.equal(store.spacetimeIdentityFor(config.connections[0]).identity,'public-identity');assert.equal(calls[0].action,'create_spacetime_identity');assert.equal(calls[0].connection.options.auth_token,undefined);
+ await store.createSpacetimeIdentity(config,0);assert.equal(calls.length,1);
+});
+
+test('identity generation cannot replace existing credentials or memory, including duplicate clicks',async()=>{
+ let finish;const pending=new Promise(resolve=>finish=resolve);const {store,calls}=harness(async()=>pending);
+ const config={connections:[{id:'st',driver:'spacetimedb',options:{auth_token:'§§secret(OLD)'}}]};store._config=config;
+ await store.createSpacetimeIdentity(config,0);assert.equal(calls.length,0);delete config.connections[0].options.auth_token;config.connections[0].options.memory_database='existing';
+ await store.createSpacetimeIdentity(config,0);assert.equal(calls.length,0);delete config.connections[0].options.memory_database;
+ const creating=store.createSpacetimeIdentity(config,0);await store.createSpacetimeIdentity(config,0);assert.equal(calls.length,1);
+ finish({ok:true,identity:'public',auth_token:'§§secret(NEW)',notice:'Stored'});await creating;
+});
+
+test('late identity responses cannot attach a credential to a changed draft or closed page',async()=>{
+ for(const change of ['server','page']){
+  let finish;const pending=new Promise(resolve=>finish=resolve);const {store}=harness(async()=>pending);
+  const config={connections:[{id:'st',driver:'spacetimedb',dsn:'https://old-server',options:{}}]};store._config=config;
+  const creating=store.createSpacetimeIdentity(config,0);
+  if(change==='server')config.connections[0].dsn='https://new-server';else store.cleanup();
+  finish({ok:true,identity:'public',auth_token:'§§secret(OLD_SERVER)',notice:'Stored'});await creating;
+  assert.equal(config.connections[0].options.auth_token,undefined);
+ }
+});
+
+test('reinitializing the same config object for a new scope discards the previous identity response',async()=>{
+ let finish;const pending=new Promise(resolve=>finish=resolve);const {store}=harness(async data=>data.action==='create_spacetime_identity'?pending:{drivers:{},memory_compatibility:{compatible:true}});
+ const config={connections:[{id:'st',driver:'spacetimedb',enabled:true,dsn:'https://server',options:{}}]};store._config=config;
+ const creating=store.createSpacetimeIdentity(config,0);store.init(config);
+ finish({ok:true,identity:'public',auth_token:'§§secret(PREVIOUS_SCOPE)',notice:'Stored'});await creating;
+ assert.equal(config.connections[0].options.auth_token,undefined);
+});

@@ -1,12 +1,21 @@
 # Release verification
 
-Database Hub **1.2.1** includes the settings interaction fix below; the 1.2.0 source/ZIP passed full backend acceptance against Agent Zero **v2.14** on 2026-11-04. See [a0-db-hub](https://github.com/TerminallyLazy/a0-db-hub) for source and published releases. The older v1.0.0 release ZIP predates SpacetimeDB. Plugin Index refresh, pull-request merge and release publication are separate steps.
+Database Hub **1.3.0** adds identity/token creation in settings. Its focused checks use Agent Zero **v2.14** and local SpacetimeDB **2.14.0**; the full existing-backend baseline remains the 1.2.0 run below. See [a0-db-hub](https://github.com/TerminallyLazy/a0-db-hub) for source and published releases. The older v1.0.0 release ZIP predates SpacetimeDB. Plugin Index refresh, pull-request merge and release publication are separate steps.
 
 ## Required Agent Zero core
 
 The release baseline is upstream `main` / tag `v2.14`, commit `ff2a5b9c9c4e490ba38dd7c313e779510bb2071a`, with the framework Python 3.12 runtime. It includes [Agent Zero PR #1943](https://github.com/agent0ai/agent-zero/pull/1943) and the follow-up provider/profile precedence fix. No manual core patch is needed. The capability check remains authoritative if other plugins or profiles override memory behavior.
 
 Database Hub checks the core capability and actual selection of all four memory tools and all five memory hooks in the chosen scope. It refuses memory activation on incompatible cores or conflicting profile overrides. A distinct early hook also stops an already-enabled memory configuration before built-in storage can silently run. Database browsing is available without enabling database memory.
+
+## Identity setup 1.3.0 verification (2026-11-05)
+
+- **36 focused Python tests** and **32 JavaScript tests** pass, covering identity creation/recovery, scoped Secrets, credential preservation, authentication/CSRF requirements, malformed/provider/network errors, overlapping requests, stale pages, memory protocol and packaging. No new dependencies were installed.
+- The opt-in real-server check exercised the actual settings API actions for identity creation and recovery, project-scoped token storage, session-bound reviewed memory-database creation, Test, Save/reopen and the saved-memory verifier. It verified unchanged global Secrets, preserved project entries and separate project identities, with no raw token in API replies or tool output.
+- The generated identity then used all four framework-selected Agent Zero memory tools with execution/history hooks, all three memory areas and automatic recall. The memory procedure's authenticated sender matched the generated identity; a separate project identity saw no collections. Deletion/forgetting succeeded and the application schema was preserved. Embeddings were deterministic; no model inference was called.
+- The source-only ZIP includes the new helper and unit/live tests, matches its per-file manifest, and retains the unchanged memory-module checksum. Exact v2.14 framework source was used in a disposable container; test services/data are removed after verification. The running user instance is untouched.
+
+This verifies the UI's API path against a local server. Browser rendering, Maincloud account/quota policies and real-model recall quality are not certified by these checks. Creating an identity does not grant an existing account's permissions; authorized existing tokens remain supported.
 
 ## Memory toggle 1.2.1 verification (2026-11-04)
 
