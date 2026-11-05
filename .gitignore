@@ -17,3 +17,4 @@ secrets.env
 dist/
 node_modules/
 .memory-setups/
+.identity-setups/

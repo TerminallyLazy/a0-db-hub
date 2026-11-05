@@ -85,6 +85,7 @@ class PackageTests(unittest.TestCase):
         expected.update({"helpers/drivers/spacetimedb.py", "helpers/explorer/spacetimedb.py",
                          "docs/spacetimedb.md", "tests/fixtures/spacetimedb/src/index.ts",
                          "helpers/drivers/spacetimedb_memory.py", "helpers/spacetime_memory_setup.py",
+                         "helpers/spacetime_identity.py", "tests/test_spacetime_identity.py", "tests/test_spacetime_identity_live.py",
                          "memory_modules/spacetimedb/module.js", "memory_modules/spacetimedb/module.manifest.json",
                          "memory_modules/spacetimedb/src/index.ts", "memory_modules/spacetimedb/NOTICE.md"})
         with tempfile.TemporaryDirectory() as path:

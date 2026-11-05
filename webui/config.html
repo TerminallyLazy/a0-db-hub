@@ -173,6 +173,14 @@
                   <details class="dbhub-advanced" data-spacetime-memory-setup>
                     <summary>Agent memory storage</summary>
                     <p class="field-description">Memory uses a dedicated private database on this SpacetimeDB server. Creating it can use provider storage or quota. Your application module is kept separate.</p>
+                    <div class="dbhub-note" x-show="!conn.options.auth_token && !conn.options.memory_database">
+                      <p>First-time setup: create an identity on this server. Its token is stored directly in Agent Zero Secrets. If you already have memories, enter their original token in the Bearer token field below.</p>
+                      <button type="button" class="btn" :disabled="$store.dbHub.spacetimeIdentityFor(conn).busy || !conn.dsn" @click="$store.dbHub.createSpacetimeIdentity(config, idx)" x-text="$store.dbHub.spacetimeIdentityFor(conn).busy ? 'Creating identity…' : 'Create identity and store token'"></button>
+                    </div>
+                    <div class="dbhub-note" x-show="$store.dbHub.spacetimeIdentityFor(conn).identity">
+                      <p x-text="$store.dbHub.spacetimeIdentityFor(conn).notice"></p>
+                      <span>Identity: </span><code x-text="$store.dbHub.spacetimeIdentityFor(conn).identity"></code>
+                    </div>
                     <label class="dbhub-cred-field"><span>Memory database name or identity</span>
                       <input aria-label="SpacetimeDB memory database" x-model="conn.options.memory_database" @change="$store.dbHub.connEdited(conn)" placeholder="Create storage below, or enter an existing DB Hub memory database" spellcheck="false" />
                     </label>
@@ -196,7 +204,7 @@
                 </template>
                 <template x-if="$store.dbHub.showApiKey(conn)">
                 <div class="field">
-                  <div class="field-label"><div class="field-title" x-text="conn.driver === 'spacetimedb' ? 'Bearer token (optional)' : 'API key'"></div><div class="field-description" x-text="conn.driver === 'spacetimedb' ? 'Use an identity token stored as §§secret(KEY). Without a token each request uses a new anonymous identity with public access.' : 'If required by your service, store the key as §§secret(KEY).'"></div></div>
+                  <div class="field-label"><div class="field-title" x-text="conn.driver === 'spacetimedb' ? 'Bearer token (required for memory)' : 'API key'"></div><div class="field-description" x-text="conn.driver === 'spacetimedb' ? 'For first-time memory setup, use Create identity and store token above. Or paste an existing token and Move to Secrets. Public reads can omit a token.' : 'If required by your service, store the key as §§secret(KEY).'"></div></div>
                   <div class="field-control">
                     <div class="dbhub-dsn-row">
                       <input :aria-label="conn.driver === 'spacetimedb' ? 'SpacetimeDB Bearer token' : 'Database API key'" :type="context.revealKeyIdx === idx ? 'text' : 'password'" x-model="conn.options[$store.dbHub.credentialSlot(conn)]" @change="$store.dbHub.connEdited(conn)" placeholder="§§secret(KEY)" spellcheck="false" autocomplete="new-password" />
